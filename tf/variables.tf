@@ -28,5 +28,5 @@ variable "subnet_cidr" {
 variable "node_pool_size" {
   description = "Number of nodes in the ARM-based node pool"
   type        = number
-  default     = 2
+  default     = 3
 }
