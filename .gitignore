@@ -1,0 +1,20 @@
+# Terraform files
+*.tfstate
+*.tfstate.*
+.terraform/
+
+# Local override files
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Crash log files
+crash.log
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Log files
+*.log
