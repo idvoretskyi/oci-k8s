@@ -1,6 +1,5 @@
 provider "oci" {
-  config_file_profile = var.oci_profile
-  region            = var.region
+  # Use defaults from ~/.oci/config
 }
 
 // Create Virtual Cloud Network (VCN)

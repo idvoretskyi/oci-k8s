@@ -1,6 +1,7 @@
 variable "oci_profile" {
-  description = "OCI CLI profile to use for credentials"
+  description = "OCI CLI profile name"
   type        = string
+  default     = "DEFAULT"
 }
 
 variable "region" {
@@ -9,7 +10,7 @@ variable "region" {
 }
 
 variable "compartment_id" {
-  description = "OCI compartment OCID"
+  description = "Compartment OCID"
   type        = string
 }
 
@@ -38,9 +39,9 @@ variable "kubernetes_version" {
 }
 
 variable "availability_domain" {
-  description = "The availability domain for the node pool"
+  description = "Availability domain"
   type        = string
-  default     = "GrCH:US-ASHBURN-AD-1"
+  default     = null
 }
 
 variable "node_image_id" {
@@ -48,4 +49,29 @@ variable "node_image_id" {
   type        = string
   # Find ARM image OCIDs here: https://docs.oracle.com/en-us/iaas/images/
   default     = "ocid1.image.oc1.iad.aaaaaaaafjeywk4m2vd5nyfd3pibt5qvyomsyqjwwk4oel5zdm6g5z6ndbsq"
+}
+
+variable "user_ocid" {
+  description = "OCID of the user"
+  type        = string
+  default     = null
+}
+
+variable "fingerprint" {
+  description = "Fingerprint of the API key"
+  type        = string
+  default     = null
+}
+
+variable "private_key_path" {
+  description = "Path to the private key file"
+  type        = string
+  default     = "~/.oci/oci_api_key.pem"
+}
+
+variable "private_key_password" {
+  description = "Password for the private key, if it's encrypted"
+  type        = string
+  default     = null
+  sensitive   = true
 }

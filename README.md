@@ -1,29 +1,61 @@
-# OCI Kubernetes Cluster with ARM Workers
+# Terraform OCI Kubernetes
 
-This Terraform configuration deploys a Kubernetes cluster (OKE) on Oracle Cloud Infrastructure using cost-effective ARM-based worker nodes.
+This project sets up a Kubernetes cluster on Oracle Cloud Infrastructure.
 
 ## Prerequisites
 
-1. [OCI CLI](https://docs.oracle.com/en-us/iaas/Content/API/SDKDocs/cliinstall.htm) installed and configured
-2. [Terraform](https://www.terraform.io/downloads.html) installed (v1.0.0+)
-3. OCI account with necessary permissions
+1. Install OCI CLI and Terraform
+2. Configure OCI credentials
 
-## Configuration
+## OCI CLI Configuration
 
-Create a `terraform.tfvars` file in the `tf` directory with the following content:
+Before running Terraform, ensure your OCI CLI is configured with proper authentication:
 
-```hcl
-oci_profile     = "DEFAULT"  # OCI CLI profile name
-region          = "us-ashburn-1"  # Your preferred OCI region
-compartment_id  = "ocid1.compartment.oc1..aaaaaaa..."  # Your compartment OCID
-availability_domain = "GrCH:US-ASHBURN-AD-1"  # Your availability domain
+```bash
+# Install OCI CLI
+bash -c "$(curl -L https://raw.githubusercontent.com/oracle/oci-cli/master/scripts/install/install.sh)"
+
+# Configure OCI CLI
+oci setup config
 ```
 
-Customize other variables as needed:
+This will create a config file at `~/.oci/config` with your credentials.
 
-- `kubernetes_version` - The Kubernetes version (default: "v1.27.2")
-- `node_pool_size` - Number of worker nodes (default: 3)
-- `node_image_id` - Oracle Linux ARM image OCID
+Ensure your config contains the following for the DEFAULT profile:
+
+```
+[DEFAULT]
+user=ocid1.user.oc1..example
+fingerprint=aa:bb:cc:dd:ee:ff:gg:hh:ii:jj:kk:ll:mm:nn:oo:pp
+key_file=~/.oci/oci_api_key.pem
+tenancy=ocid1.tenancy.oc1..example
+region=uk-london-1
+```
+
+## Authentication
+
+Terraform can use your OCI configuration automatically without explicitly setting credentials in the provider block. The terraform-oci-k8s project is set up to use:
+
+1. The **DEFAULT** profile from `~/.oci/config` (simplest approach)
+2. Environment variables if present (override config file)
+
+### Verifying Your Configuration
+
+Run the verification script to ensure your OCI config is complete:
+
+```bash
+chmod +x ./scripts/verify_config.sh
+./scripts/verify_config.sh
+```
+
+### Using Environment Variables
+
+If your configuration file isn't working, you can use environment variables instead:
+
+```bash
+chmod +x ./scripts/set_env_vars.sh
+eval "$(./scripts/set_env_vars.sh)"
+```
 
 ## Usage
 
@@ -34,24 +66,11 @@ terraform plan
 terraform apply
 ```
 
-## Accessing the Cluster
+## Troubleshooting
 
-After successful deployment, Terraform will output a command to get the kubeconfig file:
+If you encounter authentication issues:
 
-```bash
-oci ce cluster create-kubeconfig --cluster-id <cluster_id> --file ~/.kube/config --region <region> --token-version 2.0.0
-```
-
-Run this command to configure kubectl to access your cluster:
-
-```bash
-kubectl get nodes
-```
-
-## Clean Up
-
-To destroy all resources created by this Terraform configuration:
-
-```bash
-terraform destroy
-```
+1. **Verify OCI CLI works**: Run `oci iam region list` to verify your CLI configuration works
+2. **Check key permissions**: Run `chmod 600 ~/.oci/oci_api_key.pem` to set correct permissions
+3. **Use environment variables**: If config file doesn't work, use the environment variable approach
+4. **Check your keys**: Ensure your API key is properly generated and uploaded to OCI console
