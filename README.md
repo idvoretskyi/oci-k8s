@@ -1,6 +1,24 @@
 # Terraform OCI Kubernetes
 
-This project sets up a Kubernetes cluster on Oracle Cloud Infrastructure.
+This project creates a Kubernetes cluster (OKE) on Oracle Cloud Infrastructure using Terraform.
+
+## Repository Structure
+
+```
+.
+├── modules
+│   ├── cluster
+│   ├── network
+│   └── node_pool
+├── scripts
+│   ├── set_env_vars.sh
+│   └── verify_config.sh
+├── main.tf
+├── outputs.tf
+├── provider.tf
+├── variables.tf
+└── README.md
+```
 
 ## Prerequisites
 
@@ -18,6 +36,8 @@ bash -c "$(curl -L https://raw.githubusercontent.com/oracle/oci-cli/master/scrip
 # Configure OCI CLI
 oci setup config
 ```
+
+N/A
 
 This will create a config file at `~/.oci/config` with your credentials.
 
