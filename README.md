@@ -6,17 +6,21 @@ This project creates a Kubernetes cluster (OKE) on Oracle Cloud Infrastructure u
 
 ```
 .
+├── modules
+│   ├── cluster
+│   ├── network
+│   ├── node-pool
+│   └── monitoring
 ├── tf
 │   ├── main.tf
 │   ├── outputs.tf
 │   ├── provider.tf
 │   ├── variables.tf
-│   └── modules
-│       ├── cluster
-│       ├── network
-│       ├── node_pool
-│       └── monitoring
+│   └── versions.tf
 ├── docs
+│   ├── troubleshooting.md
+│   ├── key_format.md
+│   └── key_upload_guide.md
 └── README.md
 ```
 
@@ -93,12 +97,14 @@ After the cluster is created, you can access it using kubectl in two ways:
 ### Method 1: Using Terraform Outputs
 
 1. **Get the kubeconfig command directly from Terraform output**:
+
    ```bash
    # This will output the full command needed to generate your kubeconfig
    terraform output -raw get_kubeconfig_command
    ```
 
 2. **Run the generated command directly**:
+
    ```bash
    # This executes the command from Terraform output
    eval $(terraform output -raw get_kubeconfig_command)
@@ -113,13 +119,14 @@ After the cluster is created, you can access it using kubectl in two ways:
 ### Method 2: Manual Configuration
 
 1. **Get the cluster ID and region**:
+
    ```bash
    # Get cluster ID
    CLUSTER_ID=$(terraform output -raw cluster_id)
-   
+
    # Get region
    REGION=$(terraform output -raw region)
-   
+
    # Generate kubeconfig
    oci ce cluster create-kubeconfig --cluster-id $CLUSTER_ID --file ~/.kube/config --region $REGION --token-version 2.0.0
    ```
@@ -163,11 +170,13 @@ This project includes a comprehensive monitoring stack:
 After creating the cluster, you can access the monitoring dashboards:
 
 1. **Port Forward Grafana**:
+
    ```bash
    kubectl port-forward svc/prometheus-grafana 3000:80 -n monitoring
    ```
 
 2. **Access Grafana**:
+
    - URL: http://localhost:3000
    - Default credentials:
      - Username: admin
@@ -181,6 +190,7 @@ After creating the cluster, you can access the monitoring dashboards:
 ### Pre-configured Dashboards
 
 The Grafana installation comes with several pre-configured dashboards:
+
 - Kubernetes Cluster Overview
 - Node Exporter metrics
 - Pod Monitoring
@@ -188,6 +198,7 @@ The Grafana installation comes with several pre-configured dashboards:
 ### Customizing Monitoring
 
 You can customize the monitoring stack by:
+
 - Setting `enable_monitoring = false` to disable it completely
 - Adjusting storage sizes via variables
 - Providing custom configuration values
