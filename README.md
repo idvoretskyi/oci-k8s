@@ -86,6 +86,66 @@ terraform plan
 terraform apply
 ```
 
+## Accessing Your Kubernetes Cluster
+
+After the cluster is created, you can access it using kubectl in two ways:
+
+### Method 1: Using Terraform Outputs
+
+1. **Get the kubeconfig command directly from Terraform output**:
+   ```bash
+   # This will output the full command needed to generate your kubeconfig
+   terraform output -raw get_kubeconfig_command
+   ```
+
+2. **Run the generated command directly**:
+   ```bash
+   # This executes the command from Terraform output
+   eval $(terraform output -raw get_kubeconfig_command)
+   ```
+
+3. **Verify your connection**:
+   ```bash
+   kubectl get nodes
+   kubectl cluster-info
+   ```
+
+### Method 2: Manual Configuration
+
+1. **Get the cluster ID and region**:
+   ```bash
+   # Get cluster ID
+   CLUSTER_ID=$(terraform output -raw cluster_id)
+   
+   # Get region
+   REGION=$(terraform output -raw region)
+   
+   # Generate kubeconfig
+   oci ce cluster create-kubeconfig --cluster-id $CLUSTER_ID --file ~/.kube/config --region $REGION --token-version 2.0.0
+   ```
+
+2. **Set kubectl context**:
+   ```bash
+   kubectl config use-context <context-name>
+   ```
+
+### Accessing the Monitoring Dashboards
+
+If monitoring is enabled (default), you can access the dashboards using:
+
+```bash
+# Check if monitoring is enabled
+terraform output monitoring_enabled
+
+# Get Grafana credentials
+terraform output grafana_admin_info
+
+# Port-forward to access Grafana
+kubectl port-forward svc/prometheus-grafana 3000:80 -n monitoring
+```
+
+Then access Grafana at http://localhost:3000
+
 ## Monitoring
 
 This project includes a comprehensive monitoring stack:
