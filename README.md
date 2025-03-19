@@ -6,14 +6,17 @@ This project creates a Kubernetes cluster (OKE) on Oracle Cloud Infrastructure u
 
 ```
 .
-├── modules
-│   ├── cluster
-│   ├── network
-│   └── node_pool
-├── main.tf
-├── outputs.tf
-├── provider.tf
-├── variables.tf
+├── tf
+│   ├── main.tf
+│   ├── outputs.tf
+│   ├── provider.tf
+│   ├── variables.tf
+│   └── modules
+│       ├── cluster
+│       ├── network
+│       ├── node_pool
+│       └── monitoring
+├── docs
 └── README.md
 ```
 
