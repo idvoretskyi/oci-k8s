@@ -10,9 +10,6 @@ This project creates a Kubernetes cluster (OKE) on Oracle Cloud Infrastructure u
 │   ├── cluster
 │   ├── network
 │   └── node_pool
-├── scripts
-│   ├── set_env_vars.sh
-│   └── verify_config.sh
 ├── main.tf
 ├── outputs.tf
 ├── provider.tf
@@ -37,8 +34,6 @@ bash -c "$(curl -L https://raw.githubusercontent.com/oracle/oci-cli/master/scrip
 oci setup config
 ```
 
-N/A
-
 This will create a config file at `~/.oci/config` with your credentials.
 
 Ensure your config contains the following for the DEFAULT profile:
@@ -61,11 +56,10 @@ Terraform can use your OCI configuration automatically without explicitly settin
 
 ### Verifying Your Configuration
 
-Run the verification script to ensure your OCI config is complete:
+Run the following commands to ensure your OCI config is complete:
 
 ```bash
-chmod +x ./scripts/verify_config.sh
-./scripts/verify_config.sh
+oci iam region list
 ```
 
 ### Using Environment Variables
@@ -73,8 +67,11 @@ chmod +x ./scripts/verify_config.sh
 If your configuration file isn't working, you can use environment variables instead:
 
 ```bash
-chmod +x ./scripts/set_env_vars.sh
-eval "$(./scripts/set_env_vars.sh)"
+export TF_VAR_user_ocid="ocid1.user.oc1..example"
+export TF_VAR_fingerprint="aa:bb:cc:dd:ee:ff:gg:hh:ii:jj:kk:ll:mm:nn:oo:pp"
+export TF_VAR_private_key_path="~/.oci/oci_api_key.pem"
+export TF_VAR_tenancy_ocid="ocid1.tenancy.oc1..example"
+export TF_VAR_region="uk-london-1"
 ```
 
 ## Usage
