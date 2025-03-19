@@ -86,6 +86,53 @@ terraform plan
 terraform apply
 ```
 
+## Monitoring
+
+This project includes a comprehensive monitoring stack:
+
+### Components
+
+- **Prometheus**: Metrics collection and storage
+- **Grafana**: Metrics visualization and dashboards
+- **Alertmanager**: Alert management and notifications
+- **Node Exporter**: Machine-level metrics collection
+- **Loki** (optional): Log aggregation
+
+### Accessing the Dashboards
+
+After creating the cluster, you can access the monitoring dashboards:
+
+1. **Port Forward Grafana**:
+   ```bash
+   kubectl port-forward svc/prometheus-grafana 3000:80 -n monitoring
+   ```
+
+2. **Access Grafana**:
+   - URL: http://localhost:3000
+   - Default credentials:
+     - Username: admin
+     - Password: admin (customize by setting `grafana_admin_password`)
+
+3. **Port Forward Prometheus** (optional):
+   ```bash
+   kubectl port-forward svc/prometheus-kube-prometheus-prometheus 9090:9090 -n monitoring
+   ```
+
+### Pre-configured Dashboards
+
+The Grafana installation comes with several pre-configured dashboards:
+- Kubernetes Cluster Overview
+- Node Exporter metrics
+- Pod Monitoring
+
+### Customizing Monitoring
+
+You can customize the monitoring stack by:
+- Setting `enable_monitoring = false` to disable it completely
+- Adjusting storage sizes via variables
+- Providing custom configuration values
+- Enabling or disabling Loki for log collection
+
 ## Troubleshooting
 
 If you encounter authentication issues:

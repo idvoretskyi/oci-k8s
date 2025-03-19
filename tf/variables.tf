@@ -143,3 +143,41 @@ variable "node_ocpus" {
   type        = number
   default     = 1
 }
+
+# Monitoring configuration
+variable "enable_monitoring" {
+  description = "Whether to enable the monitoring stack (Prometheus, Grafana, Alertmanager)"
+  type        = bool
+  default     = true
+}
+
+variable "grafana_admin_password" {
+  description = "Admin password for Grafana"
+  type        = string
+  default     = "admin"  # Should be overridden in production
+  sensitive   = true
+}
+
+variable "prometheus_storage_size" {
+  description = "Storage size for Prometheus"
+  type        = string
+  default     = "10Gi"
+}
+
+variable "grafana_storage_size" {
+  description = "Storage size for Grafana"
+  type        = string
+  default     = "5Gi"
+}
+
+variable "enable_loki" {
+  description = "Whether to enable Loki for log collection"
+  type        = bool
+  default     = true
+}
+
+variable "kubeconfig_path" {
+  description = "Path to kubeconfig file"
+  type        = string
+  default     = "~/.kube/config"
+}

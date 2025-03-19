@@ -2,14 +2,10 @@
  * Main Terraform configuration for OCI Kubernetes Cluster
  */
 
-provider "oci" {
-  # Use defaults from ~/.oci/config or environment variables
-}
-
 # Define common tags
 locals {
   common_tags = {
-    "Project"     = "OCI Kubernetes"
+    "Project"     = "OCI-Kubernetes"  # Replaced space with hyphen
     "Environment" = var.environment
     "ManagedBy"   = "Terraform"
     "Repo"        = "terraform-oci-k8s"
@@ -60,4 +56,40 @@ module "node_pool" {
   ocpus         = var.node_ocpus
   
   tags = local.common_tags
+}
+
+# Monitoring module - deploys Prometheus, Grafana, and Alertmanager
+module "monitoring" {
+  source = "../modules/monitoring"
+  count  = var.enable_monitoring ? 1 : 0
+  
+  namespace = "monitoring"
+  
+  # Use OCI Block Volume storage class
+  storage_class_name = "oci-bv"
+  
+  # Customize storage sizes if needed
+  prometheus_storage_size = var.prometheus_storage_size
+  grafana_storage_size    = var.grafana_storage_size
+  
+  # Set secure Grafana admin password
+  grafana_admin_password = var.grafana_admin_password
+  
+  # Enable Loki for log collection
+  enable_loki = var.enable_loki
+  
+  # Path to kubeconfig after cluster creation
+  kubeconfig_path = var.kubeconfig_path
+  
+  # Label all resources
+  labels = merge(
+    local.common_tags,
+    {
+      "Component" = "Monitoring"
+    }
+  )
+  
+  depends_on = [
+    module.node_pool
+  ]
 }

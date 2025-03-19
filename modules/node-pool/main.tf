@@ -55,15 +55,7 @@ resource "oci_containerengine_node_pool" "node_pool" {
     value = var.node_pool_name
   }
   
-  # Optional node taints
-  dynamic "node_taints" {
-    for_each = var.taints
-    content {
-      key    = node_taints.value.key
-      value  = node_taints.value.value
-      effect = node_taints.value.effect
-    }
-  }
+  # Remove node_taints dynamic block as it's not supported
   
   freeform_tags = merge(
     var.tags,
