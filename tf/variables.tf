@@ -51,6 +51,12 @@ variable "environment" {
   default     = "dev"
 }
 
+variable "username" {
+  description = "Username to be used as a prefix for resources. If not provided, will use the current system username."
+  type        = string
+  default     = null  # Will be dynamically determined if not set
+}
+
 variable "resource_prefix" {
   description = "Prefix for resource names"
   type        = string

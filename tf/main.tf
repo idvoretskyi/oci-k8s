@@ -2,14 +2,32 @@
  * Main Terraform configuration for OCI Kubernetes Cluster
  */
 
-# Define common tags
+# Define common tags and variables
 locals {
   common_tags = {
-    "Project"     = "OCI-Kubernetes"  # Replaced space with hyphen
+    "Project"     = "OCI-Kubernetes"
     "Environment" = var.environment
     "ManagedBy"   = "Terraform"
     "Repo"        = "terraform-oci-k8s"
   }
+  
+  # More reliable way to get username using external data source
+  # This fixes the issue where usernames were being incorrectly detected
+  current_user = var.username != null ? var.username : trimspace(
+    lookup(
+      {
+        for pair in regexall("([^:]+):([^:]+):([^:]+):([^:]+):([^:]*):(.*)", file("/etc/passwd")) :
+        pair[0] => pair[4]
+      },
+      data.external.current_user.result.user,
+      data.external.current_user.result.user
+    )
+  )
+}
+
+# Get current username using an external data source
+data "external" "current_user" {
+  program = ["sh", "-c", "echo \"{\\\"user\\\":\\\"$(whoami)\\\"}\""]
 }
 
 # Network module creates VCN, subnets, and security lists
@@ -31,7 +49,7 @@ module "cluster" {
   
   compartment_id     = var.compartment_id
   kubernetes_version = var.kubernetes_version
-  cluster_name       = "${var.resource_prefix}-cluster"
+  cluster_name       = "${local.current_user}-${var.resource_prefix}-cluster"  # Using correctly determined username
   vcn_id             = module.network.vcn_id
   service_subnet_id  = module.network.service_subnet_id
   
