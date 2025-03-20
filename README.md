@@ -1,6 +1,6 @@
 # OCI Kubernetes with Terraform/OpenTofu
 
-This project creates a Kubernetes cluster (OKE) on Oracle Cloud Infrastructure using either Terraform or OpenTofu (an open-source alternative to Terraform).
+This project creates a Kubernetes cluster (OKE) on Oracle Cloud Infrastructure using either Terraform or OpenTofu (an open source alternative to Terraform).
 
 ## Repository Structure
 
