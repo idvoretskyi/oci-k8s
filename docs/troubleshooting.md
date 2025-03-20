@@ -94,3 +94,21 @@ This means:
 - Your private key isn't in the expected format
 - Try converting it: `openssl rsa -in ~/.oci/oci_api_key.pem -out ~/.oci/oci_api_key_new.pem`
 - Then update your config to use the new key
+
+### OpenTofu-Specific Issues
+
+If you encounter any issues specific to OpenTofu:
+
+1. Check version compatibility:
+   ```bash
+   tofu version
+   ```
+   Make sure you're using OpenTofu v1.5.0 or higher.
+
+2. If you have existing state from Terraform, you might need to migrate:
+   ```bash
+   # Backup your state first
+   cp terraform.tfstate terraform.tfstate.backup
+   
+   # Then use OpenTofu with the existing state
+   tofu init

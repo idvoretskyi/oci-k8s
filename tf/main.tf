@@ -1,5 +1,5 @@
 /**
- * Main Terraform configuration for OCI Kubernetes Cluster
+ * Main OpenTofu configuration for OCI Kubernetes Cluster
  */
 
 # Define common tags and variables
@@ -7,8 +7,8 @@ locals {
   common_tags = {
     "Project"     = "OCI-Kubernetes"
     "Environment" = var.environment
-    "ManagedBy"   = "Terraform"
-    "Repo"        = "terraform-oci-k8s"
+    "ManagedBy"   = "OpenTofu"  # Changed from Terraform to OpenTofu
+    "Repo"        = "opentofu-oci-k8s"  # Updated repository name
   }
   
   # More reliable way to get username using external data source

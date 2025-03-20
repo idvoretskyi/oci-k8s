@@ -1,9 +1,9 @@
 /**
- * Provider versions for the OCI Kubernetes project
+ * Provider versions for the OCI Kubernetes project with OpenTofu
  */
 
-terraform {
-  required_version = ">= 0.13.0"
+terraform {  # This syntax works with both OpenTofu and Terraform
+  required_version = ">= 1.5.0"  # Compatible with OpenTofu 1.6.0+
   
   required_providers {
     oci = {

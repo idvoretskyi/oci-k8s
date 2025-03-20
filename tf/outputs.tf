@@ -1,5 +1,5 @@
 /**
- * Terraform outputs for the OCI Kubernetes deployment
+ * OpenTofu outputs for the OCI Kubernetes deployment
  */
 
 output "vcn_id" {

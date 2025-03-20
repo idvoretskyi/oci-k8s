@@ -1,5 +1,5 @@
 /**
- * Variables for the OCI Kubernetes project
+ * Variables for the OCI Kubernetes project with OpenTofu
  */
 
 # Authentication variables - will be read from config if not specified
@@ -10,7 +10,7 @@ variable "oci_profile" {
 }
 
 variable "region" {
-  description = "OCI region"
+  description = "OCI region (can be set using TF_VAR_region environment variable with OpenTofu)"
   type        = string
 }
 

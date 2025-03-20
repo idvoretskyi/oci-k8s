@@ -1,6 +1,6 @@
-# Terraform OCI Kubernetes
+# OCI Kubernetes with Terraform/OpenTofu
 
-This project creates a Kubernetes cluster (OKE) on Oracle Cloud Infrastructure using Terraform.
+This project creates a Kubernetes cluster (OKE) on Oracle Cloud Infrastructure using either Terraform or OpenTofu (an open-source alternative to Terraform).
 
 ## Repository Structure
 
@@ -26,12 +26,12 @@ This project creates a Kubernetes cluster (OKE) on Oracle Cloud Infrastructure u
 
 ## Prerequisites
 
-1. Install OCI CLI and Terraform
+1. Install OCI CLI and OpenTofu
 2. Configure OCI credentials
 
 ## OCI CLI Configuration
 
-Before running Terraform, ensure your OCI CLI is configured with proper authentication:
+Before running OpenTofu, ensure your OCI CLI is configured with proper authentication:
 
 ```bash
 # Install OCI CLI
@@ -56,7 +56,7 @@ region=uk-london-1
 
 ## Authentication
 
-Terraform can use your OCI configuration automatically without explicitly setting credentials in the provider block. The terraform-oci-k8s project is set up to use:
+OpenTofu can use your OCI configuration automatically without explicitly setting credentials in the provider block. The terraform-oci-k8s project is set up to use:
 
 1. The **DEFAULT** profile from `~/.oci/config` (simplest approach)
 2. Environment variables if present (override config file)
@@ -85,29 +85,29 @@ export TF_VAR_region="uk-london-1"
 
 ```bash
 cd tf
-terraform init
-terraform plan
-terraform apply
+tofu init
+tofu plan
+tofu apply
 ```
 
 ## Accessing Your Kubernetes Cluster
 
 After the cluster is created, you can access it using kubectl in two ways:
 
-### Method 1: Using Terraform Outputs
+### Method 1: Using OpenTofu Outputs
 
-1. **Get the kubeconfig command directly from Terraform output**:
+1. **Get the kubeconfig command directly from OpenTofu output**:
 
    ```bash
    # This will output the full command needed to generate your kubeconfig
-   terraform output -raw get_kubeconfig_command
+   tofu output -raw get_kubeconfig_command
    ```
 
 2. **Run the generated command directly**:
 
    ```bash
-   # This executes the command from Terraform output
-   eval $(terraform output -raw get_kubeconfig_command)
+   # This executes the command from OpenTofu output
+   eval $(tofu output -raw get_kubeconfig_command)
    ```
 
 3. **Verify your connection**:
@@ -122,10 +122,10 @@ After the cluster is created, you can access it using kubectl in two ways:
 
    ```bash
    # Get cluster ID
-   CLUSTER_ID=$(terraform output -raw cluster_id)
+   CLUSTER_ID=$(tofu output -raw cluster_id)
 
    # Get region
-   REGION=$(terraform output -raw region)
+   REGION=$(tofu output -raw region)
 
    # Generate kubeconfig
    oci ce cluster create-kubeconfig --cluster-id $CLUSTER_ID --file ~/.kube/config --region $REGION --token-version 2.0.0
@@ -142,10 +142,10 @@ If monitoring is enabled (default), you can access the dashboards using:
 
 ```bash
 # Check if monitoring is enabled
-terraform output monitoring_enabled
+tofu output monitoring_enabled
 
 # Get Grafana credentials
-terraform output grafana_admin_info
+tofu output grafana_admin_info
 
 # Port-forward to access Grafana
 kubectl port-forward svc/prometheus-grafana 3000:80 -n monitoring
