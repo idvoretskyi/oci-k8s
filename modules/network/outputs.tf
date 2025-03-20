@@ -21,3 +21,8 @@ output "security_list_id" {
   description = "The OCID of the security list"
   value       = oci_core_security_list.security_list.id
 }
+
+output "subnet_dependency" {
+  description = "Reference to the subnet dependency waiter"
+  value       = null_resource.subnet_dependency_waiter
+}

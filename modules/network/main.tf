@@ -116,6 +116,16 @@ resource "oci_core_subnet" "service_subnet" {
     var.tags,
     { "ResourceType" = "ServiceSubnet" }
   )
+  
+  # Add lifecycle configuration to handle dependencies
+  lifecycle {
+    create_before_destroy = true
+    
+    # Ignore changes to security_list_ids to prevent recreation issues
+    ignore_changes = [
+      defined_tags,
+    ]
+  }
 }
 
 // Create Worker Subnet for worker nodes
@@ -132,4 +142,28 @@ resource "oci_core_subnet" "worker_subnet" {
     var.tags,
     { "ResourceType" = "WorkerSubnet" }
   )
+  
+  # Add lifecycle configuration to handle dependencies
+  lifecycle {
+    create_before_destroy = true
+    
+    # Ignore changes to security_list_ids to prevent recreation issues
+    ignore_changes = [
+      defined_tags,
+    ]
+  }
+}
+
+// Create a null_resource to handle subnet cleanup if needed
+resource "null_resource" "subnet_dependency_waiter" {
+  depends_on = [
+    oci_core_subnet.service_subnet,
+    oci_core_subnet.worker_subnet
+  ]
+  
+  # This will only run during destruction
+  provisioner "local-exec" {
+    when    = destroy
+    command = "echo 'Waiting for resources to be released from subnets...' && sleep 30"
+  }
 }

@@ -57,3 +57,9 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "subnet_dependency" {
+  description = "Dependency reference for subnet resources"
+  type        = any
+  default     = null
+}

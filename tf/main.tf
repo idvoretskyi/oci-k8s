@@ -55,6 +55,9 @@ module "cluster" {
   
   enable_public_endpoint = var.enable_public_endpoint
   
+  # Add subnet dependency reference
+  subnet_dependency = module.network.subnet_dependency
+  
   tags = local.common_tags
 }
 

@@ -42,4 +42,14 @@ resource "oci_containerengine_cluster" "oke_cluster" {
       "KubernetesVersion" = var.kubernetes_version
     }
   )
+
+  # Add lifecycle configuration to handle dependencies
+  lifecycle {
+    create_before_destroy = true
+  }
+  
+  # Wait for the null resource to handle subnet dependencies
+  depends_on = [
+    var.subnet_dependency
+  ]
 }
