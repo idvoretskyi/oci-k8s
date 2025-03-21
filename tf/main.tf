@@ -79,10 +79,63 @@ module "node_pool" {
   tags = local.common_tags
 }
 
+# Ensure kubeconfig is properly set up and verify connectivity before proceeding
+resource "null_resource" "kubeconfig_setup" {
+  provisioner "local-exec" {
+    command = <<-EOT
+      echo "Setting up kubeconfig..."
+      oci ce cluster create-kubeconfig --cluster-id ${module.cluster.cluster_id} --file ${var.kubeconfig_path} --region ${var.region} --token-version 2.0.0
+      chmod 600 ${var.kubeconfig_path}
+      echo "Kubeconfig created at ${var.kubeconfig_path}"
+      
+      # Wait for Kubernetes API to become available
+      echo "Waiting for Kubernetes API to become available..."
+      max_retries=60
+      counter=0
+      success=false
+      
+      while [ $counter -lt $max_retries ]; do
+        if kubectl --kubeconfig ${var.kubeconfig_path} get nodes &>/dev/null; then
+          echo "Successfully connected to Kubernetes API!"
+          success=true
+          break
+        fi
+        
+        echo "Attempt $counter/$max_retries: Kubernetes API not yet available, waiting 10 seconds..."
+        sleep 10
+        counter=$((counter + 1))
+      done
+      
+      # Create a k8s_api_status file for tracking API reachability
+      mkdir -p ${path.module}/.status
+      if [ "$success" != "true" ]; then
+        echo "ERROR: Failed to connect to Kubernetes API after $max_retries attempts"
+        echo "Skipping monitoring deployment"
+        echo "unreachable" > ${path.module}/.status/k8s_api_status
+      else
+        echo "Kubernetes API is available, proceeding with deployment"
+        echo "reachable" > ${path.module}/.status/k8s_api_status
+      fi
+    EOT
+  }
+
+  depends_on = [
+    module.cluster,
+    module.node_pool
+  ]
+}
+
+# Use file existence function for simplicity - no data source needed
+locals {
+  k8s_api_status_file = "${path.module}/.status/k8s_api_status"
+  # Fix the multi-line ternary expression with proper formatting
+  k8s_api_reachable = fileexists(local.k8s_api_status_file) ? file(local.k8s_api_status_file) == "reachable" : false
+}
+
 # Monitoring module - deploys Prometheus, Grafana, and Alertmanager
 module "monitoring" {
   source = "../modules/monitoring"
-  count  = var.enable_monitoring ? 1 : 0
+  count  = var.enable_monitoring && local.k8s_api_reachable ? 1 : 0
   
   namespace = "monitoring"
   
@@ -111,6 +164,7 @@ module "monitoring" {
   )
   
   depends_on = [
-    module.node_pool
+    module.node_pool,
+    null_resource.kubeconfig_setup
   ]
 }

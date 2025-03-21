@@ -20,9 +20,40 @@ locals {
       "[^a-z0-9_.-]", ""
     )
   }
+
+  # Use conditional check to deploy monitoring resources
+  deploy_monitoring = var.deploy_monitoring
+}
+
+# Verify Kubernetes API connectivity before proceeding
+resource "null_resource" "k8s_connectivity_check" {
+  count = local.deploy_monitoring ? 1 : 0
+  
+  provisioner "local-exec" {
+    command = <<-EOT
+      echo "Verifying Kubernetes connectivity from monitoring module..."
+      max_retries=30
+      counter=0
+      
+      until kubectl --kubeconfig ${var.kubeconfig_path} get ns kube-system &>/dev/null; do
+        sleep 10
+        counter=$((counter + 1))
+        echo "Waiting for Kubernetes API to become available... ($counter/$max_retries)"
+        
+        if [ $counter -eq $max_retries ]; then
+          echo "ERROR: Timed out waiting for Kubernetes API"
+          exit 1
+        fi
+      done
+      
+      echo "Successfully connected to Kubernetes API from monitoring module"
+    EOT
+  }
 }
 
 resource "kubernetes_namespace" "monitoring" {
+  count = local.deploy_monitoring ? 1 : 0
+  
   metadata {
     name = var.namespace
     labels = merge(
@@ -32,14 +63,21 @@ resource "kubernetes_namespace" "monitoring" {
       local.sanitized_labels
     )
   }
+  
+  # Ensure we've verified connectivity first
+  depends_on = [
+    null_resource.k8s_connectivity_check
+  ]
 }
 
 # Prometheus Stack (includes Prometheus, Alertmanager and Grafana)
 resource "helm_release" "prometheus_stack" {
+  count = local.deploy_monitoring ? 1 : 0
+  
   name       = "prometheus"
   repository = "https://prometheus-community.github.io/helm-charts"
   chart      = "kube-prometheus-stack"
-  namespace  = kubernetes_namespace.monitoring.metadata[0].name
+  namespace  = kubernetes_namespace.monitoring[0].metadata[0].name
   version    = var.prometheus_stack_version
   
   values = [
@@ -93,10 +131,12 @@ resource "helm_release" "prometheus_stack" {
 
 # Node exporter for machine metrics
 resource "helm_release" "node_exporter" {
+  count = local.deploy_monitoring ? 1 : 0
+  
   name       = "node-exporter"
   repository = "https://prometheus-community.github.io/helm-charts"
   chart      = "prometheus-node-exporter"
-  namespace  = kubernetes_namespace.monitoring.metadata[0].name
+  namespace  = kubernetes_namespace.monitoring[0].metadata[0].name
   version    = var.node_exporter_version
   
   set {
@@ -111,11 +151,11 @@ resource "helm_release" "node_exporter" {
 
 # Loki for log collection (optional)
 resource "helm_release" "loki_stack" {
-  count      = var.enable_loki ? 1 : 0
+  count      = var.enable_loki && local.deploy_monitoring ? 1 : 0
   name       = "loki"
   repository = "https://grafana.github.io/helm-charts"
   chart      = "loki-stack"
-  namespace  = kubernetes_namespace.monitoring.metadata[0].name
+  namespace  = kubernetes_namespace.monitoring[0].metadata[0].name
   version    = var.loki_version
   
   set {

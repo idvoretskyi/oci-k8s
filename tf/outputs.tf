@@ -58,10 +58,10 @@ output "get_kubeconfig_command" {
   value       = "oci ce cluster create-kubeconfig --cluster-id ${module.cluster.cluster_id} --file ~/.kube/config --region ${var.region} --token-version 2.0.0"
 }
 
-# Monitoring outputs
+# Monitoring outputs - Fix the invalid index errors
 output "monitoring_info" {
   description = "Monitoring service information"
-  value = var.enable_monitoring ? {
+  value = length(module.monitoring) > 0 ? {
     namespace      = module.monitoring[0].monitoring_namespace
     prometheus_svc = module.monitoring[0].prometheus_service
     grafana_svc    = module.monitoring[0].grafana_service
@@ -72,7 +72,7 @@ output "monitoring_info" {
 
 output "grafana_admin_info" {
   description = "Grafana admin credentials"
-  value = var.enable_monitoring ? {
+  value = length(module.monitoring) > 0 ? {
     username = "admin"
     password = var.grafana_admin_password
   } : null
@@ -81,5 +81,5 @@ output "grafana_admin_info" {
 
 output "monitoring_enabled" {
   description = "Whether monitoring is enabled"
-  value       = var.enable_monitoring
+  value       = var.enable_monitoring && length(module.monitoring) > 0
 }

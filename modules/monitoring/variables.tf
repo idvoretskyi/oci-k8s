@@ -75,8 +75,26 @@ variable "enable_loki" {
   default     = true
 }
 
+variable "deploy_monitoring" {
+  description = "Whether to actually deploy monitoring resources (set to false if Kubernetes API is unreachable)"
+  type        = bool
+  default     = true
+}
+
 variable "kubeconfig_path" {
   description = "Path to kubeconfig file"
   type        = string
   default     = "~/.kube/config"
+}
+
+variable "k8s_connection_timeout" {
+  description = "Maximum time in seconds to wait for Kubernetes API connectivity"
+  type        = number
+  default     = 300
+}
+
+variable "k8s_connection_retry_interval" {
+  description = "Time in seconds between connectivity retry attempts"
+  type        = number
+  default     = 10
 }
