@@ -32,7 +32,7 @@ jobs:
           soft_fail: true
 
       - name: Upload SARIF file
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3  # Updated from v2 to v3
         if: always()
         with:
           sarif_file: checkov.sarif
@@ -58,7 +58,7 @@ jobs:
           terrascan scan -d . -o sarif > terrascan.sarif || true  # Continue even if issues are found
 
       - name: Upload SARIF file
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3  # Updated from v2 to v3
         if: always()
         with:
           sarif_file: terrascan.sarif
