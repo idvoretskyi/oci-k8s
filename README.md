@@ -204,6 +204,15 @@ You can customize the monitoring stack by:
 - Providing custom configuration values
 - Enabling or disabling Loki for log collection
 
+## Security Scanning
+
+This project uses automated security scanning to identify potential vulnerabilities:
+
+- **GitHub Actions**: Automatically scans code on push/PR and uploads results to GitHub Security
+- **Pre-commit hooks**: Scans code locally before committing
+
+For more information, see [Security Scanning Documentation](docs/security-scanning.md).
+
 ## Troubleshooting
 
 If you encounter authentication issues:

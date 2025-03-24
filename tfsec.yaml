@@ -1,0 +1,51 @@
+---
+# TFSec configuration file
+minimum_severity: LOW
+exclude:
+  # Example exclusion - remove if not needed
+  # - AWS018  # Example to ignore S3 access logging check (if not applicable)
+
+# Custom checks for OCI
+# See https://aquasecurity.github.io/tfsec/v1.28.1/custom/writing-custom-checks/
+custom_checks:
+  - code: CUSTOM001
+    description: Ensure OCI compartments have descriptions
+    impact: Low discoverability for resources
+    resolution: Add a description to the compartment
+    requiredTypes:
+      - resource
+    requiredLabels:
+      - oci_identity_compartment
+    severity: LOW
+    matchSpec:
+      name: description
+      action: isPresent
+
+  - code: CUSTOM002
+    description: Ensure cluster has monitoring enabled
+    impact: Missing operational visibility
+    resolution: Enable monitoring for the cluster
+    requiredTypes:
+      - resource
+    requiredLabels:
+      - oci_containerengine_cluster
+    severity: MEDIUM
+    matchSpec:
+      name: enable_monitoring
+      action: equals
+      value: true
+
+# If you want to enforce certain attributes always have specific values
+#  - code: CUSTOM003
+#    description: Ensure worker nodes use our standard shape
+#    impact: Non-standard infrastructure
+#    resolution: Use VM.Standard.E4.Flex for worker nodes
+#    requiredTypes:
+#      - resource
+#    requiredLabels:
+#      - oci_containerengine_node_pool
+#    severity: MEDIUM
+#    matchSpec:
+#      name: node_shape
+#      action: equals
+#      value: VM.Standard.E4.Flex

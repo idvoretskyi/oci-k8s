@@ -1,0 +1,138 @@
+name: Security Scan
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: '0 8 * * 1'  # Run every Monday at 8:00 AM
+
+permissions:
+  contents: read
+  security-events: write  # Required for uploading SARIF results
+  pull-requests: write    # Allow commenting on PRs
+
+jobs:
+  tfsec:
+    name: TFSec Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15  # Add timeout to prevent hanging jobs
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4  # Updated to v4 (latest)
+        with:
+          fetch-depth: 0  # Fetch all history for better analysis
+
+      - name: Setup TFSec
+        uses: aquasecurity/tfsec-sarif-action@v0.1.4
+        with:
+          sarif_file: tfsec.sarif
+          tfsec_args: --config-file=tfsec.yaml --include-passed --concise-output --no-markdown-code-blocks
+
+      - name: Run TFSec with detailed output
+        uses: aquasecurity/tfsec-action@v1.0.3  # Updated to latest version
+        with:
+          soft_fail: true
+          github_token: ${{ github.token }}  # Enables PR comments
+          args: >
+            --config-file=tfsec.yaml 
+            --minimum-severity=MEDIUM 
+            --tfvars-file=tf/example.tfvars
+          # Custom arguments for enhanced scanning
+
+      - name: Upload SARIF file
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: tfsec.sarif
+          category: tfsec
+
+      - name: Run TFSec for HTML report
+        if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+        run: |
+          # Install TFSec if using direct CLI command
+          curl -L "$(curl -s https://api.github.com/repos/aquasecurity/tfsec/releases/latest | grep -o -E "https://.+?_Linux_x86_64.tar.gz")" | tar xz -C /tmp && sudo mv /tmp/tfsec /usr/local/bin/
+          
+          # Create HTML report
+          mkdir -p reports
+          tfsec . --format html --out reports/tfsec-report.html --tfvars-file tf/example.tfvars
+          
+          # Create JSON report for further processing
+          tfsec . --format json --out reports/tfsec-report.json --tfvars-file tf/example.tfvars
+          
+          # Count issues by severity
+          echo "### TFSec Scan Results" > tfsec-summary.md
+          echo "" >> tfsec-summary.md
+          echo "| Severity | Count |" >> tfsec-summary.md
+          echo "|----------|-------|" >> tfsec-summary.md
+          HIGH_COUNT=$(grep -c '"severity":"HIGH"' reports/tfsec-report.json || echo 0)
+          MEDIUM_COUNT=$(grep -c '"severity":"MEDIUM"' reports/tfsec-report.json || echo 0)
+          LOW_COUNT=$(grep -c '"severity":"LOW"' reports/tfsec-report.json || echo 0)
+          echo "| HIGH | $HIGH_COUNT |" >> tfsec-summary.md
+          echo "| MEDIUM | $MEDIUM_COUNT |" >> tfsec-summary.md
+          echo "| LOW | $LOW_COUNT |" >> tfsec-summary.md
+
+      - name: Upload HTML Report
+        uses: actions/upload-artifact@v3
+        if: always() && (github.event_name == 'pull_request' || github.ref == 'refs/heads/main')
+        with:
+          name: tfsec-report
+          path: reports/
+          retention-days: 7
+
+      - name: Comment on PR
+        uses: marocchino/sticky-pull-request-comment@v2
+        if: github.event_name == 'pull_request' && always()
+        with:
+          header: tfsec-results
+          path: tfsec-summary.md
+
+  checkov:
+    name: Checkov Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Checkov
+        uses: bridgecrewio/checkov-action@v12  # Use a specific version instead of master
+        with:
+          directory: .
+          output_format: sarif
+          output_file_path: checkov.sarif  # Fixed parameter name (was output_file)
+          soft_fail: true
+
+      - name: Upload SARIF file
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: checkov.sarif
+          category: checkov
+
+  terrascan:
+    name: Terrascan Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Terrascan
+        run: |
+          curl -L "$(curl -s https://api.github.com/repos/tenable/terrascan/releases/latest | grep -o -E "https://.+?_Linux_x86_64.tar.gz")" > terrascan.tar.gz
+          tar -xf terrascan.tar.gz terrascan
+          sudo mv terrascan /usr/local/bin/
+          rm terrascan.tar.gz
+
+      - name: Run Terrascan
+        run: |
+          terrascan scan -d . -o sarif > terrascan.sarif || true  # Continue even if issues are found
+
+      - name: Upload SARIF file
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: terrascan.sarif
+          category: terrascan
