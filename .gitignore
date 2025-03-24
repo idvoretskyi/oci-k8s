@@ -1,16 +1,41 @@
-# Terraform files
+# Terraform/OpenTofu working files
+**/.terraform/*
 *.tfstate
 *.tfstate.*
-.terraform/
+terraform.tfvars
+.terraformrc
+terraform.rc
+.terraform.lock.hcl
 
-# Local override files
+# Crash log files
+crash.log
+crash.*.log
+
+# OCI authentication and profiles
+.oci/
+
+# Temporary files
+*.tmp
+.DS_Store
+
+# Generated Kubernetes config files
+kubeconfig
+.kube/
+
+# Local status directory
+**/.status/
+k8s_api_status
+k8s_api_unreachable
+
+# Exclude all .tfvars files except example ones
+*.tfvars
+!example.tfvars
+
+# Ignore override files
 override.tf
 override.tf.json
 *_override.tf
 *_override.tf.json
-
-# Crash log files
-crash.log
 
 # OS generated files
 .DS_Store

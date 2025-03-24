@@ -113,6 +113,19 @@ variable "services_cidr" {
   default     = "10.96.0.0/16"
 }
 
+# Kubernetes API connection settings
+variable "k8s_connection_max_retries" {
+  description = "Maximum number of connection attempts to Kubernetes API"
+  type        = number
+  default     = 60
+}
+
+variable "k8s_connection_retry_interval" {
+  description = "Seconds to wait between Kubernetes API connection attempts"
+  type        = number
+  default     = 10
+}
+
 # Node pool configuration
 variable "node_pool_size" {
   description = "Number of nodes in the node pool"

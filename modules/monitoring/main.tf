@@ -7,7 +7,6 @@
  * - Alertmanager for alerting
  */
 
-# Sanitize labels to conform to Kubernetes label requirements
 locals {
   # Process all incoming labels to ensure they're valid for Kubernetes
   sanitized_labels = {
@@ -20,23 +19,34 @@ locals {
       "[^a-z0-9_.-]", ""
     )
   }
-
-  # Use conditional check to deploy monitoring resources
-  deploy_monitoring = var.deploy_monitoring
+  
+  # Default monitoring components
+  monitoring_components = {
+    prometheus = true
+    grafana    = true
+    alertmanager = true
+    node_exporter = true
+    loki = var.enable_loki
+  }
+  
+  # Chart versions - centralized for easier updates
+  chart_versions = {
+    prometheus_stack = var.prometheus_stack_version
+    node_exporter    = var.node_exporter_version
+    loki             = var.loki_version
+  }
 }
 
 # Verify Kubernetes API connectivity before proceeding
 resource "null_resource" "k8s_connectivity_check" {
-  count = local.deploy_monitoring ? 1 : 0
-  
   provisioner "local-exec" {
     command = <<-EOT
       echo "Verifying Kubernetes connectivity from monitoring module..."
-      max_retries=30
+      max_retries=${var.k8s_connection_timeout / var.k8s_connection_retry_interval}
       counter=0
       
       until kubectl --kubeconfig ${var.kubeconfig_path} get ns kube-system &>/dev/null; do
-        sleep 10
+        sleep ${var.k8s_connection_retry_interval}
         counter=$((counter + 1))
         echo "Waiting for Kubernetes API to become available... ($counter/$max_retries)"
         
@@ -52,8 +62,6 @@ resource "null_resource" "k8s_connectivity_check" {
 }
 
 resource "kubernetes_namespace" "monitoring" {
-  count = local.deploy_monitoring ? 1 : 0
-  
   metadata {
     name = var.namespace
     labels = merge(
@@ -72,13 +80,11 @@ resource "kubernetes_namespace" "monitoring" {
 
 # Prometheus Stack (includes Prometheus, Alertmanager and Grafana)
 resource "helm_release" "prometheus_stack" {
-  count = local.deploy_monitoring ? 1 : 0
-  
   name       = "prometheus"
   repository = "https://prometheus-community.github.io/helm-charts"
   chart      = "kube-prometheus-stack"
-  namespace  = kubernetes_namespace.monitoring[0].metadata[0].name
-  version    = var.prometheus_stack_version
+  namespace  = kubernetes_namespace.monitoring.metadata[0].name
+  version    = local.chart_versions.prometheus_stack
   
   values = [
     var.custom_values != "" ? file(var.custom_values) : file("${path.module}/values/prometheus-values.yaml")
@@ -89,6 +95,7 @@ resource "helm_release" "prometheus_stack" {
     value = var.grafana_admin_password
   }
   
+  # Make service monitors work cluster-wide
   set {
     name  = "prometheus.prometheusSpec.serviceMonitorSelectorNilUsesHelmValues"
     value = false
@@ -99,6 +106,7 @@ resource "helm_release" "prometheus_stack" {
     value = "{}"
   }
 
+  # Configure storage
   set {
     name  = "prometheus.prometheusSpec.storageSpec.volumeClaimTemplate.spec.storageClassName"
     value = var.storage_class_name
@@ -109,6 +117,7 @@ resource "helm_release" "prometheus_stack" {
     value = var.prometheus_storage_size
   }
 
+  # Enable Grafana persistence
   set {
     name  = "grafana.persistence.enabled"
     value = true
@@ -131,13 +140,11 @@ resource "helm_release" "prometheus_stack" {
 
 # Node exporter for machine metrics
 resource "helm_release" "node_exporter" {
-  count = local.deploy_monitoring ? 1 : 0
-  
   name       = "node-exporter"
   repository = "https://prometheus-community.github.io/helm-charts"
   chart      = "prometheus-node-exporter"
-  namespace  = kubernetes_namespace.monitoring[0].metadata[0].name
-  version    = var.node_exporter_version
+  namespace  = kubernetes_namespace.monitoring.metadata[0].name
+  version    = local.chart_versions.node_exporter
   
   set {
     name  = "prometheus.monitor.enabled"
@@ -151,12 +158,12 @@ resource "helm_release" "node_exporter" {
 
 # Loki for log collection (optional)
 resource "helm_release" "loki_stack" {
-  count      = var.enable_loki && local.deploy_monitoring ? 1 : 0
+  count      = var.enable_loki ? 1 : 0
   name       = "loki"
   repository = "https://grafana.github.io/helm-charts"
   chart      = "loki-stack"
-  namespace  = kubernetes_namespace.monitoring[0].metadata[0].name
-  version    = var.loki_version
+  namespace  = kubernetes_namespace.monitoring.metadata[0].name
+  version    = local.chart_versions.loki
   
   set {
     name  = "promtail.enabled"

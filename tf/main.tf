@@ -4,25 +4,25 @@
 
 # Define common tags and variables
 locals {
+  # Common tags for all resources
   common_tags = {
     "Project"     = "OCI-Kubernetes"
     "Environment" = var.environment
-    "ManagedBy"   = "OpenTofu"  # Changed from Terraform to OpenTofu
-    "Repo"        = "opentofu-oci-k8s"  # Updated repository name
+    "ManagedBy"   = "OpenTofu"
+    "Repo"        = "terraform-oci-k8s"
   }
   
-  # More reliable way to get username using external data source
-  # This fixes the issue where usernames were being incorrectly detected
-  current_user = var.username != null ? var.username : trimspace(
-    lookup(
-      {
-        for pair in regexall("([^:]+):([^:]+):([^:]+):([^:]+):([^:]*):(.*)", file("/etc/passwd")) :
-        pair[0] => pair[4]
-      },
-      data.external.current_user.result.user,
-      data.external.current_user.result.user
-    )
+  # Get current username using external data source
+  current_user = coalesce(
+    var.username,
+    try(trimspace(data.external.current_user.result.user), "user")
   )
+  
+  # Kubernetes API status file path
+  k8s_api_status_file = "${path.module}/.status/k8s_api_status"
+  
+  # Check if Kubernetes API is reachable
+  k8s_api_reachable = fileexists(local.k8s_api_status_file) ? file(local.k8s_api_status_file) == "reachable" : false
 }
 
 # Get current username using an external data source
@@ -49,14 +49,12 @@ module "cluster" {
   
   compartment_id     = var.compartment_id
   kubernetes_version = var.kubernetes_version
-  cluster_name       = "${local.current_user}-${var.resource_prefix}-cluster"  # Using correctly determined username
+  cluster_name       = "${local.current_user}-${var.resource_prefix}-cluster"
   vcn_id             = module.network.vcn_id
   service_subnet_id  = module.network.service_subnet_id
   
   enable_public_endpoint = var.enable_public_endpoint
-  
-  # Add subnet dependency reference
-  subnet_dependency = module.network.subnet_dependency
+  subnet_dependency      = module.network.subnet_dependency
   
   tags = local.common_tags
 }
@@ -84,13 +82,14 @@ resource "null_resource" "kubeconfig_setup" {
   provisioner "local-exec" {
     command = <<-EOT
       echo "Setting up kubeconfig..."
+      mkdir -p $(dirname ${var.kubeconfig_path})
       oci ce cluster create-kubeconfig --cluster-id ${module.cluster.cluster_id} --file ${var.kubeconfig_path} --region ${var.region} --token-version 2.0.0
       chmod 600 ${var.kubeconfig_path}
       echo "Kubeconfig created at ${var.kubeconfig_path}"
       
       # Wait for Kubernetes API to become available
       echo "Waiting for Kubernetes API to become available..."
-      max_retries=60
+      max_retries=${var.k8s_connection_max_retries}
       counter=0
       success=false
       
@@ -101,12 +100,12 @@ resource "null_resource" "kubeconfig_setup" {
           break
         fi
         
-        echo "Attempt $counter/$max_retries: Kubernetes API not yet available, waiting 10 seconds..."
-        sleep 10
+        echo "Attempt $counter/$max_retries: Kubernetes API not yet available, waiting ${var.k8s_connection_retry_interval}s..."
+        sleep ${var.k8s_connection_retry_interval}
         counter=$((counter + 1))
       done
       
-      # Create a k8s_api_status file for tracking API reachability
+      # Create status directory and file
       mkdir -p ${path.module}/.status
       if [ "$success" != "true" ]; then
         echo "ERROR: Failed to connect to Kubernetes API after $max_retries attempts"
@@ -125,13 +124,6 @@ resource "null_resource" "kubeconfig_setup" {
   ]
 }
 
-# Use file existence function for simplicity - no data source needed
-locals {
-  k8s_api_status_file = "${path.module}/.status/k8s_api_status"
-  # Fix the multi-line ternary expression with proper formatting
-  k8s_api_reachable = fileexists(local.k8s_api_status_file) ? file(local.k8s_api_status_file) == "reachable" : false
-}
-
 # Monitoring module - deploys Prometheus, Grafana, and Alertmanager
 module "monitoring" {
   source = "../modules/monitoring"
@@ -145,11 +137,9 @@ module "monitoring" {
   # Customize storage sizes if needed
   prometheus_storage_size = var.prometheus_storage_size
   grafana_storage_size    = var.grafana_storage_size
+  grafana_admin_password  = var.grafana_admin_password
   
-  # Set secure Grafana admin password
-  grafana_admin_password = var.grafana_admin_password
-  
-  # Enable Loki for log collection
+  # Enable Loki for log collection if requested
   enable_loki = var.enable_loki
   
   # Path to kubeconfig after cluster creation
