@@ -64,8 +64,5 @@ variable "subnet_dependency" {
   default     = null
 }
 
-variable "enable_pod_security_policy" {
-  description = "Whether to enable pod security policy enforcement for the cluster"
-  type        = bool
-  default     = true
-}
+# Note: Pod Security Policy is deprecated in Kubernetes v1.21+ and removed in v1.25+
+# Use Pod Security Standards instead with appropriate admission controllers
