@@ -29,12 +29,11 @@ resource "oci_containerengine_cluster" "oke_cluster" {
       services_cidr = var.services_cidr
     }
     
-    // Configure admission controllers with modern Pod Security Standards
+    // Explicitly disable Pod Security Policies (PSP) as they are deprecated
+    // PSPs were deprecated in Kubernetes v1.21 and removed entirely in v1.25+
+    // Modern clusters should use Pod Security Standards (PSS) and Pod Security Admission instead
     admission_controller_options {
-      is_pod_security_policy_enabled = false // Deprecated in K8s, removed in 1.25+
-      
-      // Enable OPA for advanced policy enforcement
-      is_opa_gatekeeper_enabled = var.enable_pod_security_admission
+      is_pod_security_policy_enabled = false  // Deprecated in K8s, removed in 1.25+
     }
   }
 

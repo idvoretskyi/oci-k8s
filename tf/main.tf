@@ -56,9 +56,6 @@ module "cluster" {
   enable_public_endpoint = var.enable_public_endpoint
   subnet_dependency      = module.network.subnet_dependency
   
-  # Pass kubeconfig path for Pod Security Standards configuration
-  kubeconfig_path = var.kubeconfig_path
-  
   # Enable Pod Security Admission Controller using the defined variable
   enable_pod_security_admission = var.enable_pod_security_admission
   

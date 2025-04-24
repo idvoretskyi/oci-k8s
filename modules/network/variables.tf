@@ -43,6 +43,12 @@ variable "allowed_api_cidr" {
   default     = "0.0.0.0/0"  // Should be restricted in production
 }
 
+variable "enable_public_ips" {
+  description = "Whether to enable public IPs on subnet VNICs"
+  type        = bool
+  default     = true
+}
+
 variable "tags" {
   description = "Freeform tags for resources"
   type        = map(string)
