@@ -1,6 +1,6 @@
-oci_profile     = "DEFAULT"  # OCI CLI profile name
-region          = "uk-london-1"  # Your preferred OCI region
-compartment_id  = "ocid1.tenancy.oc1..aaaaaaaaaf2ca435mcly7mfki4zeynm3xpzqgwkj5tdgwkgtoy5nfgmx5r4q"  # Your compartment OCID
+oci_profile    = "DEFAULT"                                                                         # OCI CLI profile name
+region         = "uk-london-1"                                                                     # Your preferred OCI region
+compartment_id = "ocid1.tenancy.oc1..aaaaaaaaaf2ca435mcly7mfki4zeynm3xpzqgwkj5tdgwkgtoy5nfgmx5r4q" # Your compartment OCID
 # availability_domain = "GrCH:US-ASHBURN-AD-1"  # Your availability domain
 
 # Uncomment and set these values if you want to override the OCI config file
