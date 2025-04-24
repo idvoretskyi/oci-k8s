@@ -28,8 +28,8 @@ locals {
   all_tags = merge(var.tags, local.security_tags)
 
   # CIDR blocks used for security rules
-  all_icmp_type = 255
-  all_icmp_code = 255
+  all_icmp_type = 254  # Updated from 255 to comply with OCI limit of 254
+  all_icmp_code = 16   # Updated from 255 to comply with OCI limit of 16
 
   # Calculate if we need private networking
   create_private_resources = !var.enable_public_ips
