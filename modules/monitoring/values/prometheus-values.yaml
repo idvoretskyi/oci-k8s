@@ -3,7 +3,8 @@
 
 grafana:
   enabled: true
-  adminPassword: admin
+  # Password will be set via Helm values when deployed
+  # adminPassword: will be passed from variables
   persistence:
     enabled: true
     size: 5Gi
