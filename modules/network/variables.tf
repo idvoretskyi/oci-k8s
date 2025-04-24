@@ -32,9 +32,9 @@ variable "worker_subnet_cidr" {
 }
 
 variable "allowed_ssh_cidr" {
-  description = "CIDR block allowed for SSH access"
+  description = "CIDR block allowed for SSH access. For production, specify a restricted IP range."
   type        = string
-  default     = "0.0.0.0/0"  // Should be restricted in production
+  default     = "127.0.0.1/32"  // Default to localhost only - users must explicitly set their allowed IPs
 }
 
 variable "allowed_api_cidr" {
