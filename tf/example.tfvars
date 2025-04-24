@@ -25,7 +25,7 @@ node_ocpus        = 1
 
 # Monitoring configuration
 enable_monitoring       = true
-grafana_admin_password  = "securePassword123"  # Change this!
+grafana_admin_password  = "ChangeMe!ComplexPassword-123"  # Example of a stronger password
 prometheus_storage_size = "10Gi"
 grafana_storage_size    = "5Gi"
 enable_loki             = true

@@ -81,6 +81,24 @@ export TF_VAR_tenancy_ocid="ocid1.tenancy.oc1..example"
 export TF_VAR_region="uk-london-1"
 ```
 
+## Security Requirements
+
+### Required Variables
+
+When using this project, you must set the following variables for security:
+
+- `grafana_admin_password` - Must be set to a strong password (min 12 chars, mix of letters, numbers, symbols)
+
+Example using environment variable:
+```bash
+export TF_VAR_grafana_admin_password="StrongUnique-Password!123"
+```
+
+Or in your own tfvars file (do not commit this file to version control):
+```hcl
+grafana_admin_password = "StrongUnique-Password!123"
+```
+
 ## Usage
 
 ```bash
@@ -180,7 +198,7 @@ After creating the cluster, you can access the monitoring dashboards:
    - URL: http://localhost:3000
    - Default credentials:
      - Username: admin
-     - Password: admin (customize by setting `grafana_admin_password`)
+     - Password: The value you set for `grafana_admin_password`
 
 3. **Port Forward Prometheus** (optional):
    ```bash

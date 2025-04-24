@@ -173,7 +173,7 @@ variable "enable_monitoring" {
 variable "grafana_admin_password" {
   description = "Admin password for Grafana"
   type        = string
-  default     = "admin"  # Should be overridden in production
+  # Default removed for security - must be explicitly set by the user
   sensitive   = true
 }
 
