@@ -176,64 +176,14 @@ resource "oci_core_security_list" "api_security_list" {
     stateless   = false
   }
 
-  # Allow incoming SSH traffic
-  ingress_security_rules {
-    description = "Allow incoming SSH traffic"
-    source      = var.authorized_ip_ranges
-    protocol    = "6" # TCP
-    stateless   = false
-
-    tcp_options {
-      min = 22
-      max = 22
-    }
-  }
-
-  # Allow incoming Kubernetes API traffic
-  ingress_security_rules {
-    description = "Allow incoming Kubernetes API traffic"
-    source      = var.authorized_ip_ranges
-    protocol    = "6" # TCP
-    stateless   = false
-
-    tcp_options {
-      min = 6443
-      max = 6443
-    }
-  }
-
-  # Standard tags without any potentially problematic characters or structures
-  freeform_tags = {
-    "Environment" = var.environment
-    "Project"     = var.project_name
-    "Component"   = "APISecurityList"
-  }
-}
-
-# Security list for worker nodes
-resource "oci_core_security_list" "worker_security_list" {
-  compartment_id = var.compartment_id
-  vcn_id         = oci_core_virtual_network.vcn.id
-  display_name   = "${local.resource_name_prefix}-worker-seclist"
-
-  # Allow all outbound traffic
-  egress_security_rules {
-    destination      = "0.0.0.0/0"
-    protocol         = "all"
-    description      = "Allow all outbound traffic"
-    destination_type = "CIDR_BLOCK"
-    stateless        = false
-  }
-
-  # SSH access if configured
+  # Allow incoming SSH traffic from each authorized CIDR
   dynamic "ingress_security_rules" {
-    for_each = var.allowed_ssh_cidr != "127.0.0.1/32" ? [1] : []
+    for_each = var.authorized_ip_ranges
     content {
+      description = "Allow SSH from ${ingress_security_rules.value}"
+      source      = ingress_security_rules.value
       protocol    = "6" # TCP
-      source      = var.allowed_ssh_cidr
-      source_type = "CIDR_BLOCK"
-      description = "Allow SSH from trusted sources"
-      stateless   = false
+      stateless   = true
 
       tcp_options {
         min = 22
@@ -242,47 +192,117 @@ resource "oci_core_security_list" "worker_security_list" {
     }
   }
 
-  # NodePort services
-  ingress_security_rules {
-    protocol    = "6" # TCP
-    source      = "0.0.0.0/0"
-    source_type = "CIDR_BLOCK"
-    description = "Allow NodePort service access"
-    stateless   = false
+  # Allow incoming Kubernetes API traffic from each authorized CIDR
+  dynamic "ingress_security_rules" {
+    for_each = var.authorized_ip_ranges
+    content {
+      description = "Allow Kubernetes API from ${ingress_security_rules.value}"
+      source      = ingress_security_rules.value
+      protocol    = "6" # TCP
+      stateless   = true
 
-    tcp_options {
-      min = 30000
-      max = 32767
+      tcp_options {
+        min = 6443
+        max = 6443
+      }
     }
   }
 
-  # Allow ICMP for health checks
-  ingress_security_rules {
-    protocol    = "1" # ICMP
-    source      = "0.0.0.0/0"
-    source_type = "CIDR_BLOCK"
-    description = "Allow ICMP for health checks"
-    stateless   = false
+  # Allow incoming traffic to NodePorts from each authorized CIDR
+  dynamic "ingress_security_rules" {
+    for_each = var.authorized_ip_ranges
+    content {
+      description = "Allow NodePorts from ${ingress_security_rules.value}"
+      source      = ingress_security_rules.value
+      protocol    = "6" # TCP
+      stateless   = true
 
-    icmp_options {
-      type = 3 # Destination Unreachable
+      tcp_options {
+        min = 30000
+        max = 32767
+      }
     }
   }
 
-  # Allow internal VCN communication
-  ingress_security_rules {
-    protocol    = "all"
-    source      = var.vcn_cidr
-    source_type = "CIDR_BLOCK"
-    description = "Allow all internal cluster traffic"
-    stateless   = false
+  # Allow ICMP traffic for network diagnostics from each authorized CIDR
+  dynamic "ingress_security_rules" {
+    for_each = var.authorized_ip_ranges
+    content {
+      description = "Allow ICMP from ${ingress_security_rules.value}"
+      source      = ingress_security_rules.value
+      protocol    = "1" # ICMP
+      stateless   = true
+
+      icmp_options {
+        type = local.all_icmp_type
+        code = local.all_icmp_code
+      }
+    }
   }
 
   freeform_tags = merge(
     local.all_tags,
-    {
-      "Component" = "SecurityList"
+    { "Component" = "APISecurityList" }
+  )
+}
+
+# Worker Nodes Security List
+resource "oci_core_security_list" "worker_security_list" {
+  compartment_id = var.compartment_id
+  vcn_id         = oci_core_virtual_network.vcn.id
+  display_name   = "${local.resource_name_prefix}-worker-sl"
+
+  # Allow all outbound traffic
+  egress_security_rules {
+    description = "Allow all outbound traffic"
+    destination = "0.0.0.0/0"
+    protocol    = "all"
+    stateless   = false
+  }
+
+  # Allow all traffic between worker nodes
+  ingress_security_rules {
+    description = "Allow all traffic between worker nodes"
+    source      = var.worker_subnet_cidr
+    protocol    = "all"
+    stateless   = true
+  }
+
+  # Allow incoming SSH from each authorized CIDR
+  dynamic "ingress_security_rules" {
+    for_each = var.authorized_ip_ranges
+    content {
+      description = "Allow SSH from ${ingress_security_rules.value}"
+      source      = ingress_security_rules.value
+      protocol    = "6" # TCP
+      stateless   = true
+
+      tcp_options {
+        min = 22
+        max = 22
+      }
     }
+  }
+
+  # Allow incoming ICMP traffic for network diagnostics from each authorized CIDR
+  dynamic "ingress_security_rules" {
+    for_each = var.authorized_ip_ranges
+    content {
+      description = "Allow ICMP from ${ingress_security_rules.value}"
+      source      = ingress_security_rules.value
+      protocol    = "1" # ICMP
+      stateless   = true
+
+      icmp_options {
+        type = local.all_icmp_type
+        code = local.all_icmp_code
+      }
+    }
+  }
+
+  freeform_tags = merge(
+    local.all_tags,
+    { "Component" = "WorkerSecurityList" }
   )
 }
 

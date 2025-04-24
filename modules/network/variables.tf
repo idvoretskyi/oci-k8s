@@ -23,6 +23,24 @@ variable "prefix" {
   }
 }
 
+variable "environment" {
+  description = "Environment name (e.g. dev, staging, prod) for resource tagging"
+  type        = string
+  default     = "dev"
+}
+
+variable "project_name" {
+  description = "Project name for resource tagging and identification"
+  type        = string
+  default     = "k8s"
+}
+
+variable "authorized_ip_ranges" {
+  description = "List of CIDR blocks authorized for API access"
+  type        = list(string)
+  default     = ["0.0.0.0/0"]  # Default to allow from anywhere, should be restricted in production
+}
+
 #######################
 # Network CIDRs       #
 #######################
