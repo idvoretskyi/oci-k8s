@@ -59,8 +59,8 @@ module "cluster" {
   # Pass kubeconfig path for Pod Security Standards configuration
   kubeconfig_path = var.kubeconfig_path
   
-  # Enable Pod Security Admission Controller (modern replacement for PSPs)
-  enable_pod_security_admission = true
+  # Enable Pod Security Admission Controller using the defined variable
+  enable_pod_security_admission = var.enable_pod_security_admission
   
   tags = local.common_tags
 }
@@ -145,6 +145,10 @@ kind: ConfigMap
 metadata:
   name: pod-security-admission-config
   namespace: kube-system
+  labels:
+    app.kubernetes.io/name: pod-security-admission
+    app.kubernetes.io/part-of: kubernetes
+    app.kubernetes.io/managed-by: opentofu
 data:
   admission-control-config.yaml: |
     apiVersion: apiserver.config.k8s.io/v1
@@ -164,18 +168,36 @@ data:
         exemptions:
           usernames: []
           runtimeClasses: []
-          namespaces: [kube-system]
+          namespaces: [kube-system, kube-public, kube-node-lease]
 EOF
       
-      # Apply Pod Security Standards to namespaces
+      if [ $? -ne 0 ]; then
+        echo "Error: Failed to create Pod Security Admission ConfigMap"
+        exit 1
+      fi
+      
+      echo "Applying Pod Security Standards to namespaces..."
+      
+      # Apply Pod Security Standards to existing namespaces
       for ns in default monitoring; do
+        # Create namespace if it doesn't exist (particularly for monitoring)
+        kubectl --kubeconfig ${var.kubeconfig_path} get namespace $ns >/dev/null 2>&1 || \
+        kubectl --kubeconfig ${var.kubeconfig_path} create namespace $ns
+        
+        # Apply security labels
         kubectl --kubeconfig ${var.kubeconfig_path} label --overwrite namespace $ns \
           pod-security.kubernetes.io/enforce=baseline \
           pod-security.kubernetes.io/audit=restricted \
           pod-security.kubernetes.io/warn=restricted
+        
+        if [ $? -ne 0 ]; then
+          echo "Warning: Failed to apply Pod Security labels to namespace $ns"
+        else
+          echo "Successfully applied Pod Security Standards to namespace $ns"
+        fi
       done
       
-      echo "Pod Security Standards configured successfully."
+      echo "Pod Security Standards configuration completed."
     EOT
   }
 
