@@ -29,8 +29,10 @@ resource "oci_containerengine_cluster" "oke_cluster" {
       services_cidr = var.services_cidr
     }
     
-    # Pod Security Policy has been removed in Kubernetes v1.25+
-    # Consider implementing Pod Security Standards or OPA/Gatekeeper instead
+    # Add monitoring configuration to address security requirement
+    monitoring {
+      enable_monitoring = var.enable_monitoring
+    }
   }
 
   endpoint_config {

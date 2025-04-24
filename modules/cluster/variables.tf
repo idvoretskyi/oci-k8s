@@ -64,5 +64,8 @@ variable "subnet_dependency" {
   default     = null
 }
 
-# Note: Pod Security Policy is deprecated in Kubernetes v1.21+ and removed in v1.25+
-# Use Pod Security Standards instead with appropriate admission controllers
+variable "enable_monitoring" {
+  description = "Whether to enable monitoring for the cluster"
+  type        = bool
+  default     = true
+}
