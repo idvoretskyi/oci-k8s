@@ -28,6 +28,11 @@ resource "oci_containerengine_cluster" "oke_cluster" {
       pods_cidr     = var.pods_cidr
       services_cidr = var.services_cidr
     }
+    
+    # Add monitoring configuration to address security requirement
+    monitoring {
+      enable_monitoring = var.enable_monitoring
+    }
   }
 
   endpoint_config {

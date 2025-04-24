@@ -63,3 +63,9 @@ variable "subnet_dependency" {
   type        = any
   default     = null
 }
+
+variable "enable_monitoring" {
+  description = "Whether to enable monitoring for the cluster"
+  type        = bool
+  default     = true
+}
