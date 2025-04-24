@@ -69,3 +69,15 @@ variable "enable_monitoring" {
   type        = bool
   default     = true
 }
+
+variable "enable_pod_security_admission" {
+  description = "Whether to enable Pod Security Admission Controller (modern replacement for Pod Security Policies)"
+  type        = bool
+  default     = true
+}
+
+variable "kubeconfig_path" {
+  description = "Path to kubeconfig file for use by the Pod Security Standards configuration"
+  type        = string
+  default     = "~/.kube/config"
+}

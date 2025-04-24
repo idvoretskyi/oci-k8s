@@ -200,3 +200,10 @@ variable "kubeconfig_path" {
   type        = string
   default     = "~/.kube/config"
 }
+
+# Pod Security configuration
+variable "enable_pod_security_admission" {
+  description = "Whether to enable Pod Security Admission Controller (modern replacement for deprecated Pod Security Policies)"
+  type        = bool
+  default     = true
+}

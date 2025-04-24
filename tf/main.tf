@@ -56,6 +56,9 @@ module "cluster" {
   enable_public_endpoint = var.enable_public_endpoint
   subnet_dependency      = module.network.subnet_dependency
   
+  # Enable Pod Security Admission Controller using the defined variable
+  enable_pod_security_admission = var.enable_pod_security_admission
+  
   tags = local.common_tags
 }
 
@@ -124,6 +127,82 @@ resource "null_resource" "kubeconfig_setup" {
   ]
 }
 
+# Configure Pod Security Standards (modern replacement for Pod Security Policies)
+resource "null_resource" "pod_security_standards" {
+  count = var.enable_pod_security_admission && local.k8s_api_reachable ? 1 : 0
+  
+  provisioner "local-exec" {
+    command = <<-EOT
+      echo "Configuring Pod Security Standards for the cluster..."
+      
+      # Create Pod Security Standards configuration
+      cat <<EOF | kubectl --kubeconfig ${var.kubeconfig_path} apply -f -
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pod-security-admission-config
+  namespace: kube-system
+  labels:
+    app.kubernetes.io/name: pod-security-admission
+    app.kubernetes.io/part-of: kubernetes
+    app.kubernetes.io/managed-by: opentofu
+data:
+  admission-control-config.yaml: |
+    apiVersion: apiserver.config.k8s.io/v1
+    kind: AdmissionConfiguration
+    plugins:
+    - name: PodSecurity
+      configuration:
+        apiVersion: pod-security.admission.config.k8s.io/v1
+        kind: PodSecurityConfiguration
+        defaults:
+          enforce: "baseline"
+          enforce-version: "latest"
+          audit: "restricted"
+          audit-version: "latest"
+          warn: "restricted"
+          warn-version: "latest"
+        exemptions:
+          usernames: []
+          runtimeClasses: []
+          namespaces: [kube-system, kube-public, kube-node-lease]
+EOF
+      
+      if [ $? -ne 0 ]; then
+        echo "Error: Failed to create Pod Security Admission ConfigMap"
+        exit 1
+      fi
+      
+      echo "Applying Pod Security Standards to namespaces..."
+      
+      # Apply Pod Security Standards to existing namespaces
+      for ns in default monitoring; do
+        # Create namespace if it doesn't exist (particularly for monitoring)
+        kubectl --kubeconfig ${var.kubeconfig_path} get namespace $ns >/dev/null 2>&1 || \
+        kubectl --kubeconfig ${var.kubeconfig_path} create namespace $ns
+        
+        # Apply security labels
+        kubectl --kubeconfig ${var.kubeconfig_path} label --overwrite namespace $ns \
+          pod-security.kubernetes.io/enforce=baseline \
+          pod-security.kubernetes.io/audit=restricted \
+          pod-security.kubernetes.io/warn=restricted
+        
+        if [ $? -ne 0 ]; then
+          echo "Warning: Failed to apply Pod Security labels to namespace $ns"
+        else
+          echo "Successfully applied Pod Security Standards to namespace $ns"
+        fi
+      done
+      
+      echo "Pod Security Standards configuration completed."
+    EOT
+  }
+
+  depends_on = [
+    null_resource.kubeconfig_setup
+  ]
+}
+
 # Monitoring module - deploys Prometheus, Grafana, and Alertmanager
 module "monitoring" {
   source = "../modules/monitoring"
@@ -155,6 +234,7 @@ module "monitoring" {
   
   depends_on = [
     module.node_pool,
-    null_resource.kubeconfig_setup
+    null_resource.kubeconfig_setup,
+    null_resource.pod_security_standards
   ]
 }
