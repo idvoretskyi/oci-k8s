@@ -29,9 +29,11 @@ resource "oci_containerengine_cluster" "oke_cluster" {
       services_cidr = var.services_cidr
     }
     
-    # Add monitoring configuration to address security requirement
-    monitoring {
-      enable_monitoring = var.enable_monitoring
+    // Explicitly disable deprecated Pod Security Policies
+    // This addresses the security scanning alert by making it explicit that
+    // we're not using the deprecated PSPs
+    admission_controller_options {
+      is_pod_security_policy_enabled = false
     }
   }
 
@@ -44,7 +46,8 @@ resource "oci_containerengine_cluster" "oke_cluster" {
     var.tags,
     { 
       "ResourceType" = "OKECluster",
-      "KubernetesVersion" = var.kubernetes_version
+      "KubernetesVersion" = var.kubernetes_version,
+      "PodSecurityPolicyStatus" = "disabled-using-admission-controller"
     }
   )
 
