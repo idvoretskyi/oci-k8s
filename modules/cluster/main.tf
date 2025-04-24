@@ -29,9 +29,8 @@ resource "oci_containerengine_cluster" "oke_cluster" {
       services_cidr = var.services_cidr
     }
     
-    admission_controller_options {
-      is_pod_security_policy_enabled = var.enable_pod_security_policy
-    }
+    # Pod Security Policy has been removed in Kubernetes v1.25+
+    # Consider implementing Pod Security Standards or OPA/Gatekeeper instead
   }
 
   endpoint_config {
