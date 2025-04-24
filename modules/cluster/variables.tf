@@ -63,3 +63,9 @@ variable "subnet_dependency" {
   type        = any
   default     = null
 }
+
+variable "enable_pod_security_policy" {
+  description = "Whether to enable pod security policy enforcement for the cluster"
+  type        = bool
+  default     = true
+}

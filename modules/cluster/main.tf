@@ -28,6 +28,10 @@ resource "oci_containerengine_cluster" "oke_cluster" {
       pods_cidr     = var.pods_cidr
       services_cidr = var.services_cidr
     }
+    
+    admission_controller_options {
+      is_pod_security_policy_enabled = var.enable_pod_security_policy
+    }
   }
 
   endpoint_config {
