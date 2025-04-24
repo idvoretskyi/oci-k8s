@@ -9,7 +9,7 @@ locals {
     "Project"     = "OCI-Kubernetes"
     "Environment" = var.environment
     "ManagedBy"   = "OpenTofu"
-    "Repo"        = "terraform-oci-k8s"
+    "Repo"        = "oci-k8s"
   }
   
   # Get current username using external data source

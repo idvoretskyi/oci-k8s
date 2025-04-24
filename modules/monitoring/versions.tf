@@ -1,5 +1,6 @@
 /**
  * Provider versions for Monitoring Module
+ * OpenTofu compatible configuration
  */
 
 terraform {

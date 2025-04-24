@@ -1,6 +1,6 @@
-# Security Scanning for Terraform/OpenTofu Code
+# Security Scanning for OpenTofu Code
 
-This project uses automated security scanning to identify potential security issues in the Terraform/OpenTofu code.
+This project uses automated security scanning to identify potential security issues in the OpenTofu code.
 
 ## Automated Scanning with GitHub Actions
 
@@ -73,7 +73,7 @@ terrascan scan -d .
 
 ## Security Best Practices
 
-When developing Terraform/OpenTofu code for this project:
+When developing OpenTofu code for this project:
 
 1. Avoid hardcoding sensitive data (passwords, tokens)
 2. Use minimal IAM permissions (principle of least privilege)

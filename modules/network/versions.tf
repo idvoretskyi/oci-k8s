@@ -1,5 +1,6 @@
 /**
  * Provider versions for Network Module
+ * OpenTofu compatible configuration
  */
 
 terraform {

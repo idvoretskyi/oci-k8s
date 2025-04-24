@@ -3,18 +3,17 @@
 
 repository:
   # Repository name and description
-  name: terraform-oci-k8s
-  description: Create a Kubernetes cluster (OKE) on Oracle Cloud Infrastructure using either Terraform or OpenTofu
+  name: oci-k8s
+  description: Create a Kubernetes cluster (OKE) on Oracle Cloud Infrastructure using OpenTofu
   
   # Homepage URL (pointing to the project documentation)
-  homepage: https://github.com/idvoretskyi/terraform-oci-k8s
+  homepage: https://github.com/idvoretskyi/oci-k8s
   
   # Repository topics
   topics:
     - kubernetes
     - oci
     - oracle-cloud
-    - terraform
     - opentofu
     - infrastructure-as-code
     - oke

@@ -1,5 +1,5 @@
 ---
-# TFSec configuration file
+# TFSec configuration file for OpenTofu code
 minimum_severity: LOW
 exclude:
   # Example exclusion - remove if not needed

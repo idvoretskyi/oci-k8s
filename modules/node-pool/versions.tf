@@ -1,5 +1,6 @@
 /**
  * Provider versions for Node Pool Module
+ * OpenTofu compatible configuration
  */
 
 terraform {

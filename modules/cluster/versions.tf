@@ -1,5 +1,6 @@
 /**
  * Provider versions for Cluster Module
+ * OpenTofu compatible configuration
  */
 
 terraform {

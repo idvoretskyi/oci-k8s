@@ -1,6 +1,6 @@
-# OCI Kubernetes with Terraform/OpenTofu
+# OCI Kubernetes with OpenTofu
 
-This project creates a Kubernetes cluster (OKE) on Oracle Cloud Infrastructure using either Terraform or OpenTofu (an open source alternative to Terraform).
+This project creates a Kubernetes cluster (OKE) on Oracle Cloud Infrastructure using OpenTofu (an open source infrastructure-as-code tool).
 
 ## Repository Structure
 
@@ -56,7 +56,7 @@ region=uk-london-1
 
 ## Authentication
 
-OpenTofu can use your OCI configuration automatically without explicitly setting credentials in the provider block. The terraform-oci-k8s project is set up to use:
+OpenTofu can use your OCI configuration automatically without explicitly setting credentials in the provider block. The oci-k8s project is set up to use:
 
 1. The **DEFAULT** profile from `~/.oci/config` (simplest approach)
 2. Environment variables if present (override config file)
