@@ -51,6 +51,9 @@ locals {
     }
   ]
 
+  # Convert OS name to valid Kubernetes label value (lowercase, no spaces, using hyphens instead)
+  formatted_os_name = replace(lower(var.os_name), " ", "-")
+
   # Set up initial node labels
   initial_node_labels = concat(
     [
@@ -64,7 +67,7 @@ locals {
       },
       {
         key   = "kubernetes.io/os"
-        value = lower(var.os_name)
+        value = local.formatted_os_name
       }
     ],
     var.additional_node_labels

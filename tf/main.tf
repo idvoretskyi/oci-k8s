@@ -11,7 +11,7 @@ locals {
     "Environment" = var.environment
     "ManagedBy"   = "OpenTofu"
     "Repo"        = "oci-k8s"
-    "CreatedAt"   = timestamp()
+    "CreatedAt"   = "2025-04-25"  # Using a static date instead of timestamp()
   }
 
   # Resource naming with consistent patterns

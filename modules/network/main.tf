@@ -28,8 +28,8 @@ locals {
   all_tags = merge(var.tags, local.security_tags)
 
   # CIDR blocks used for security rules
-  all_icmp_type = 255
-  all_icmp_code = 255
+  all_icmp_type = 254  # Updated from 255 to comply with OCI limit of 254
+  all_icmp_code = 16   # Updated from 255 to comply with OCI limit of 16
 
   # Calculate if we need private networking
   create_private_resources = !var.enable_public_ips
@@ -300,10 +300,20 @@ resource "oci_core_security_list" "worker_security_list" {
     }
   }
 
-  freeform_tags = merge(
-    local.all_tags,
-    { "Component" = "WorkerSecurityList" }
-  )
+  freeform_tags = {
+    "Component"          = "SecurityList"
+    "Purpose"            = "WorkerNodes"
+    "ResourceType"       = "Network"
+    "SecurityCompliance" = "CIS-OCI-1.2"
+    "NetworkType"        = "Kubernetes"
+    "AutomatedBy"        = "OpenTofu"
+    "Project"            = try(var.tags["Project"], "OCI-Kubernetes")
+    "Environment"        = try(var.tags["Environment"], "Dev")
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 #######################
@@ -348,13 +358,13 @@ resource "oci_core_subnet" "service_subnet" {
   dhcp_options_id            = oci_core_dhcp_options.dhcp_options.id
   prohibit_public_ip_on_vnic = false
 
-  freeform_tags = merge(
-    local.all_tags,
-    {
-      "Component" = "Subnet",
-      "Purpose"   = "KubernetesAPI"
-    }
-  )
+  freeform_tags = {
+    "Component" = "Subnet"
+    "Purpose"   = "KubernetesAPI"
+    "Project"   = try(var.tags["Project"], "OCI-Kubernetes")
+    "Environment" = try(var.tags["Environment"], "Dev")
+    "ManagedBy" = try(var.tags["ManagedBy"], "OpenTofu")
+  }
 
   lifecycle {
     create_before_destroy = true
@@ -374,13 +384,13 @@ resource "oci_core_subnet" "worker_subnet" {
   dhcp_options_id            = oci_core_dhcp_options.dhcp_options.id
   prohibit_public_ip_on_vnic = local.create_private_resources
 
-  freeform_tags = merge(
-    local.all_tags,
-    {
-      "Component" = "Subnet",
-      "Purpose"   = "WorkerNodes"
-    }
-  )
+  freeform_tags = {
+    "Component" = "Subnet"
+    "Purpose"   = "WorkerNodes"
+    "Project"   = try(var.tags["Project"], "OCI-Kubernetes")
+    "Environment" = try(var.tags["Environment"], "Dev")
+    "ManagedBy" = try(var.tags["ManagedBy"], "OpenTofu")
+  }
 
   lifecycle {
     create_before_destroy = true
