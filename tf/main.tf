@@ -179,6 +179,11 @@ resource "oci_containerengine_node_pool" "arm_pool" {
       availability_domain = data.oci_identity_availability_domains.ads.availability_domains[0].name
       subnet_id           = oci_core_subnet.private_subnet.id
     }
+    
+    node_pool_pod_network_option_details {
+      cni_type          = "FLANNEL_OVERLAY"
+      max_pods_per_node = 31
+    }
   }
   
   node_shape_config {
@@ -190,6 +195,12 @@ resource "oci_containerengine_node_pool" "arm_pool" {
     source_type             = "IMAGE"
     image_id                = data.oci_core_images.arm_images.images[0].id
     boot_volume_size_in_gbs = 50
+  }
+  
+  # Launch options for in-transit encryption
+  initial_node_labels {
+    key   = "oci.oraclecloud.com/encrypt-in-transit"
+    value = "true"
   }
   
   # ARM architecture label
