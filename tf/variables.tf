@@ -1,48 +1,67 @@
+# ARM OKE Cluster Variables
+
 variable "region" {
-  type    = string
-  default = "uk-london-1"
+  description = "OCI region"
+  type        = string
+  default     = "uk-london-1"
 }
 
 variable "tenancy_ocid" {
-  type = string
+  description = "Tenancy OCID (optional, read from ~/.oci/config if not provided)"
+  type        = string
+  default     = null
+}
+
+variable "compartment_ocid" {
+  description = "Compartment OCID (optional, uses tenancy if not provided)"
+  type        = string
+  default     = null
 }
 
 variable "user_ocid" {
-  type    = string
-  default = null
+  description = "User OCID (optional, read from ~/.oci/config if not provided)"
+  type        = string
+  default     = null
 }
 
 variable "fingerprint" {
-  type    = string
-  default = null
+  description = "API key fingerprint (optional)"
+  type        = string
+  default     = null
 }
 
 variable "private_key_path" {
-  type    = string
-  default = null
+  description = "Path to private key for API access"
+  type        = string
+  default     = null
 }
 
 variable "cluster_name" {
-  type    = string
-  default = "oke-arm"
+  description = "Name of the ARM OKE cluster"
+  type        = string
+  default     = "arm-oke-cluster"
 }
 
 variable "kubernetes_version" {
-  type    = string
-  default = "v1.32.1"
+  description = "Kubernetes version for the cluster"
+  type        = string
+  default     = "v1.33.0"
 }
 
 variable "node_count" {
-  type    = number
-  default = 3
+  description = "Number of ARM worker nodes"
+  type        = number
+  default     = 2
 }
 
 variable "node_memory_gb" {
-  type    = number
-  default = 6
+  description = "Memory per ARM node in GB"
+  type        = number
+  default     = 8
 }
 
 variable "node_ocpus" {
-  type    = number
-  default = 1
+  description = "OCPUs per ARM node"
+  type        = number
+  default     = 2
 }

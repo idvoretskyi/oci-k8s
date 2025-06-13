@@ -1,13 +1,20 @@
-# OCI region - UK South (London)
+# ARM OKE Cluster Configuration
+# Based on Oracle's straightforward ARM deployment approach
+
+# OCI region - UK South (London) has good ARM availability
 region = "uk-london-1"
 
-# Your tenancy OCID
-tenancy_ocid = "ocid1.tenancy.oc1..aaaaaaaaaf2ca435mcly7mfki4zeynm3xpzqgwkj5tdgwkgtoy5nfgmx5r4q"
+# Compartment will be read from ~/.oci/config if not specified
+# compartment_ocid = "your-compartment-ocid-here"
 
 # Path to your private key for API access
 private_key_path = "/Users/idv/.oci/oci_api_key.pem"
 
-# Kubernetes cluster configuration
-cluster_name = "simple-oke-cluster"
-kubernetes_version = "v1.32.1"
-node_count = 3
+# ARM Kubernetes cluster configuration
+cluster_name = "simple-arm-oke"
+kubernetes_version = "v1.33.0"
+
+# ARM node configuration - start small for testing
+node_count = 1
+node_memory_gb = 6
+node_ocpus = 1
