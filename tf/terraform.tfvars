@@ -1,10 +1,20 @@
-oci_profile    = "DEFAULT"                                                                         # OCI CLI profile name
-region         = "uk-london-1"                                                                     # Your preferred OCI region
-compartment_id = "ocid1.tenancy.oc1..aaaaaaaaaf2ca435mcly7mfki4zeynm3xpzqgwkj5tdgwkgtoy5nfgmx5r4q" # Your compartment OCID
-# availability_domain = "GrCH:US-ASHBURN-AD-1"  # Your availability domain
+# ARM OKE Cluster Configuration
+# Based on Oracle's straightforward ARM deployment approach
 
-# Uncomment and set these values if you want to override the OCI config file
-# user_ocid        = "ocid1.user.oc1..aaaaaaaaexampleuserocid"
-# fingerprint      = "aa:bb:cc:dd:ee:ff:gg:hh:ii:jj:kk:ll:mm:nn:oo:pp"
-# Using absolute path instead of tilde to avoid path resolution issues
+# OCI region - UK South (London) has good ARM availability
+region = "uk-london-1"
+
+# Compartment will be read from ~/.oci/config if not specified
+# compartment_ocid = "your-compartment-ocid-here"
+
+# Path to your private key for API access
 private_key_path = "/Users/idv/.oci/oci_api_key.pem"
+
+# ARM Kubernetes cluster configuration
+cluster_name = "simple-arm-oke"
+kubernetes_version = "v1.33.0"
+
+# ARM node configuration - start small for testing
+node_count = 1
+node_memory_gb = 6
+node_ocpus = 1

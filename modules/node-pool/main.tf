@@ -32,12 +32,12 @@ locals {
 
   # Determine if the shape is a flex shape
   is_flex_shape = contains(["VM.Standard.E3.Flex", "VM.Standard.E4.Flex", "VM.Standard.A1.Flex", "VM.Optimized3.Flex"], var.node_shape)
+  
+  # Determine if shape is ARM-based
+  is_arm_shape = contains(["VM.Standard.A1.Flex"], var.node_shape)
 
-  # Get availability domains to use
-  availability_domains = var.availability_domain != null ? [var.availability_domain] : [
-    for ad in data.oci_identity_availability_domains.ads.availability_domains :
-    ad.name
-  ]
+  # Get availability domains to use - for ARM, prefer just using the specified AD or first available
+  availability_domains = var.availability_domain != null ? [var.availability_domain] : [data.oci_identity_availability_domains.ads.availability_domains[0].name]
 
   # Calculate placement configurations (nodes per AD)
   nodes_per_ad = ceil(var.node_pool_size / length(local.availability_domains))
@@ -68,6 +68,10 @@ locals {
       {
         key   = "kubernetes.io/os"
         value = local.formatted_os_name
+      },
+      {
+        key   = "kubernetes.io/arch"
+        value = local.is_arm_shape ? "arm64" : "amd64"
       }
     ],
     var.additional_node_labels

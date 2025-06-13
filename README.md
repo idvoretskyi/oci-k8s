@@ -1,241 +1,74 @@
-# OCI Kubernetes with OpenTofu
+# OCI ARM Kubernetes Cluster
 
-This project creates a Kubernetes cluster (OKE) on Oracle Cloud Infrastructure using OpenTofu (an open source infrastructure-as-code tool).
+Simple OpenTofu configuration for deploying ARM-based Kubernetes clusters on Oracle Cloud Infrastructure (OCI) in the London region.
 
-## Repository Structure
+## Features
 
-```
-.
-├── modules
-│   ├── cluster
-│   ├── network
-│   ├── node-pool
-│   └── monitoring
-├── tf
-│   ├── main.tf
-│   ├── outputs.tf
-│   ├── provider.tf
-│   ├── variables.tf
-│   └── versions.tf
-├── docs
-│   ├── troubleshooting.md
-│   ├── key_format.md
-│   └── key_upload_guide.md
-└── README.md
-```
+- **ARM instances**: Uses cost-effective VM.Standard.A1.Flex shape
+- **Automatic image selection**: Dynamically finds latest Oracle Linux 8 ARM image
+- **Minimal configuration**: Clean, comment-free code with sensible defaults
+- **London region**: Pre-configured for uk-london-1
+
+## Architecture
+
+- **Nodes**: 3x ARM nodes (1 vCPU, 6GB RAM each)
+- **Network**: Simple VCN with public subnets
+- **Security**: Basic security lists for SSH, K8s API, and NodePort services
 
 ## Prerequisites
 
-1. Install OCI CLI and OpenTofu
-2. Configure OCI credentials
+- OCI CLI configured with API keys
+- OpenTofu 1.0+
+- `kubectl` for cluster access
 
-## OCI CLI Configuration
+## Quick Start
 
-Before running OpenTofu, ensure your OCI CLI is configured with proper authentication:
-
-```bash
-# Install OCI CLI
-bash -c "$(curl -L https://raw.githubusercontent.com/oracle/oci-cli/master/scripts/install/install.sh)"
-
-# Configure OCI CLI
-oci setup config
-```
-
-This will create a config file at `~/.oci/config` with your credentials.
-
-Ensure your config contains the following for the DEFAULT profile:
-
-```
-[DEFAULT]
-user=ocid1.user.oc1..example
-fingerprint=aa:bb:cc:dd:ee:ff:gg:hh:ii:jj:kk:ll:mm:nn:oo:pp
-key_file=~/.oci/oci_api_key.pem
-tenancy=ocid1.tenancy.oc1..example
-region=uk-london-1
-```
-
-## Authentication
-
-OpenTofu can use your OCI configuration automatically without explicitly setting credentials in the provider block. The oci-k8s project is set up to use:
-
-1. The **DEFAULT** profile from `~/.oci/config` (simplest approach)
-2. Environment variables if present (override config file)
-
-### Verifying Your Configuration
-
-Run the following commands to ensure your OCI config is complete:
-
-```bash
-oci iam region list
-```
-
-### Using Environment Variables
-
-If your configuration file isn't working, you can use environment variables instead:
-
-```bash
-export TF_VAR_user_ocid="ocid1.user.oc1..example"
-export TF_VAR_fingerprint="aa:bb:cc:dd:ee:ff:gg:hh:ii:jj:kk:ll:mm:nn:oo:pp"
-export TF_VAR_private_key_path="~/.oci/oci_api_key.pem"
-export TF_VAR_tenancy_ocid="ocid1.tenancy.oc1..example"
-export TF_VAR_region="uk-london-1"
-```
-
-## Security Requirements
-
-### Required Variables
-
-When using this project, you must set the following variables for security:
-
-- `grafana_admin_password` - Must be set to a strong password (min 12 chars, mix of letters, numbers, symbols)
-
-Example using environment variable:
-```bash
-export TF_VAR_grafana_admin_password="StrongUnique-Password!123"
-```
-
-Or in your own tfvars file (do not commit this file to version control):
-```hcl
-grafana_admin_password = "StrongUnique-Password!123"
-```
-
-## Usage
-
-```bash
-cd tf
-tofu init
-tofu plan
-tofu apply
-```
-
-## Accessing Your Kubernetes Cluster
-
-After the cluster is created, you can access it using kubectl in two ways:
-
-### Method 1: Using OpenTofu Outputs
-
-1. **Get the kubeconfig command directly from OpenTofu output**:
-
+1. **Configure your tenancy**
    ```bash
-   # This will output the full command needed to generate your kubeconfig
-   tofu output -raw get_kubeconfig_command
+   cd tf
+   # Edit terraform.tfvars with your tenancy OCID
    ```
 
-2. **Run the generated command directly**:
-
+2. **Deploy**
    ```bash
-   # This executes the command from OpenTofu output
-   eval $(tofu output -raw get_kubeconfig_command)
+   tofu init
+   tofu apply
    ```
 
-3. **Verify your connection**:
+3. **Access cluster**
    ```bash
-   kubectl get nodes
-   kubectl cluster-info
+   # Use the output command to get kubeconfig
+   tofu output kubeconfig_command
+   # Then run the command it provides
    ```
 
-### Method 2: Manual Configuration
+## Configuration
 
-1. **Get the cluster ID and region**:
+Key variables in `terraform.tfvars`:
 
-   ```bash
-   # Get cluster ID
-   CLUSTER_ID=$(tofu output -raw cluster_id)
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `tenancy_ocid` | - | Your OCI tenancy OCID (required) |
+| `cluster_name` | `oke-arm` | Cluster name |
+| `node_count` | `3` | Number of worker nodes |
+| `node_memory_gb` | `6` | Memory per node (GB) |
+| `node_ocpus` | `1` | vCPUs per node |
 
-   # Get region
-   REGION=$(tofu output -raw region)
+## Cost Optimization
 
-   # Generate kubeconfig
-   oci ce cluster create-kubeconfig --cluster-id $CLUSTER_ID --file ~/.kube/config --region $REGION --token-version 2.0.0
-   ```
-
-2. **Set kubectl context**:
-   ```bash
-   kubectl config use-context <context-name>
-   ```
-
-### Accessing the Monitoring Dashboards
-
-If monitoring is enabled (default), you can access the dashboards using:
-
-```bash
-# Check if monitoring is enabled
-tofu output monitoring_enabled
-
-# Get Grafana credentials
-tofu output grafana_admin_info
-
-# Port-forward to access Grafana
-kubectl port-forward svc/prometheus-grafana 3000:80 -n monitoring
-```
-
-Then access Grafana at http://localhost:3000
-
-## Monitoring
-
-This project includes a comprehensive monitoring stack:
-
-### Components
-
-- **Prometheus**: Metrics collection and storage
-- **Grafana**: Metrics visualization and dashboards
-- **Alertmanager**: Alert management and notifications
-- **Node Exporter**: Machine-level metrics collection
-- **Loki** (optional): Log aggregation
-
-### Accessing the Dashboards
-
-After creating the cluster, you can access the monitoring dashboards:
-
-1. **Port Forward Grafana**:
-
-   ```bash
-   kubectl port-forward svc/prometheus-grafana 3000:80 -n monitoring
-   ```
-
-2. **Access Grafana**:
-
-   - URL: http://localhost:3000
-   - Default credentials:
-     - Username: admin
-     - Password: The value you set for `grafana_admin_password`
-
-3. **Port Forward Prometheus** (optional):
-   ```bash
-   kubectl port-forward svc/prometheus-kube-prometheus-prometheus 9090:9090 -n monitoring
-   ```
-
-### Pre-configured Dashboards
-
-The Grafana installation comes with several pre-configured dashboards:
-
-- Kubernetes Cluster Overview
-- Node Exporter metrics
-- Pod Monitoring
-
-### Customizing Monitoring
-
-You can customize the monitoring stack by:
-
-- Setting `enable_monitoring = false` to disable it completely
-- Adjusting storage sizes via variables
-- Providing custom configuration values
-- Enabling or disabling Loki for log collection
-
-## Security Scanning
-
-This project uses automated security scanning to identify potential vulnerabilities:
-
-- **GitHub Actions**: Automatically scans code on push/PR and uploads results to GitHub Security
-- **Pre-commit hooks**: Scans code locally before committing
-
-For more information, see [Security Scanning Documentation](docs/security-scanning.md).
+ARM instances (A1.Flex) are significantly cheaper than x86:
+- Always Free eligible (up to 4 OCPUs, 24GB RAM)
+- ~75% cost savings vs equivalent x86 instances
 
 ## Troubleshooting
 
-If you encounter authentication issues:
+**ARM capacity issues**: ARM instances may have limited availability. Try:
+- Reducing `node_count` to 1
+- Waiting and retrying later
+- Using different availability domain
 
-1. **Verify OCI CLI works**: Run `oci iam region list` to verify your CLI configuration works
-2. **Check key permissions**: Run `chmod 600 ~/.oci/oci_api_key.pem` to set correct permissions
-3. **Use environment variables**: If config file doesn't work, use the environment variable approach
-4. **Check your keys**: Ensure your API key is properly generated and uploaded to OCI console
+**Image not found**: The configuration automatically selects the latest ARM-compatible Oracle Linux 8 image for the London region.
+
+## License
+
+MIT License - see [LICENSE](LICENSE) file.
